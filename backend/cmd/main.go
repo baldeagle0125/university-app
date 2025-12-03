@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -15,12 +16,12 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to the University App server application!"))
-	})
-
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
+		w.Header().Set("Content-Type", "application/json")
+		data := map[string]string{
+			"status": "healthy",
+		}
+		json.NewEncoder(w).Encode(data)
 	})
 
 	http.ListenAndServe(":3333", r)
