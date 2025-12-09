@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WelcomePage: View {
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack() {
                 HStack {
                     Text("Welcome")
@@ -68,7 +68,7 @@ struct WelcomePage: View {
                 }
                 .tabViewStyle(.page)
                 
-                NavigationLink(destination: LoginPage()) {
+                NavigationLink(destination: LoginPage().navigationBarBackButtonHidden()) {
                     Text("Continue")
                         .font(.title2)
                         .padding()

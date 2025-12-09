@@ -9,7 +9,7 @@ import SwiftUI
 
 struct LoginPage: View {
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 HStack {
                     Text("Login")
@@ -41,7 +41,7 @@ struct LoginPage: View {
                         .foregroundStyle(.gray)
                 }
                 
-                NavigationLink(destination: ContentView()) {
+                NavigationLink(destination: ContentView().navigationBarBackButtonHidden()) {
                     Text("Login")
                         .font(.title2)
                         .padding()
