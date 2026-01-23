@@ -1,8 +1,8 @@
 //
 //  ContentView.swift
-//  UniversityAppPrototype
+//  UniversityApp
 //
-//  Created by Ihor Melashchenko on 31/10/2025.
+//  Created by Ihor Melashchenko on 23/01/2026.
 //
 
 import SwiftUI
