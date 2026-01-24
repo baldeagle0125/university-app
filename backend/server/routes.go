@@ -2,19 +2,18 @@ package server
 
 import (
 	"database/sql"
-	"university-app/handlers"
+	"university-app/handler"
 	"university-app/repository"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func routes(r *chi.Mux, db *sql.DB) {
-	r.Get("/api/v1/health", handlers.HealthEndpointHandler)
+	r.Get("/api/v1/health", handler.HealthEndpointHandler)
 
 	studentRepo := repository.NewStudentRepository(db)
 
-	studentHandler := handlers.NewStudentHandler(studentRepo)
-
+	studentHandler := handler.NewStudentHandler(studentRepo)
 	r.Post("/api/v1/students", studentHandler.CreateStudent)
 	r.Get("/api/v1/students", studentHandler.ListStudents)
 	r.Get("/api/v1/students/{id}", studentHandler.GetStudentByID)

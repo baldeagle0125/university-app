@@ -1,9 +1,9 @@
-package handlers
+package handler
 
 import (
 	"encoding/json"
 	"net/http"
-	"university-app/models"
+	"university-app/model"
 	"university-app/repository"
 )
 
@@ -24,7 +24,7 @@ func (h *StudentHandler) ListStudents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responses := make([]models.StudentResponse, len(students))
+	responses := make([]model.StudentResponse, len(students))
 	for i, student := range students {
 		responses[i] = student.ToResponse()
 	}

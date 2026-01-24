@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"university-app/models"
+	"university-app/model"
 )
 
 type StudentRepository struct {
@@ -16,7 +16,7 @@ func NewStudentRepository(db *sql.DB) *StudentRepository {
 	}
 }
 
-func (r *StudentRepository) GetAll(ctx context.Context) ([]models.Student, error) {
+func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error) {
 	query := `
 		SELECT id, student_number, first_name, last_name, email, password_hash
 		FROM students
@@ -29,10 +29,10 @@ func (r *StudentRepository) GetAll(ctx context.Context) ([]models.Student, error
 	}
 	defer rows.Close()
 
-	var students []models.Student
+	var students []model.Student
 
 	for rows.Next() {
-		var student models.Student
+		var student model.Student
 
 		err := rows.Scan(
 			&student.ID,
