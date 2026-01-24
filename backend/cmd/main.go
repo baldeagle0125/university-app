@@ -18,5 +18,5 @@ func main() {
 	config.RunMigrations(db)
 
 	// Setting up HTTP server
-	server.StartServer()
+	server.StartServer(db)
 }
