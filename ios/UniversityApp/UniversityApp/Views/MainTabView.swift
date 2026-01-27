@@ -14,7 +14,7 @@ let backgroundColor: [Color] = [
     .backgroundColor4
 ]
 
-struct ContentView: View {
+struct MainTabView: View {
     var body: some View {
         TabView {
             Tab("Newsletter", systemImage: "newspaper") {
@@ -35,5 +35,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    MainTabView()
 }
