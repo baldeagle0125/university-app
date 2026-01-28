@@ -7,14 +7,6 @@
 
 import Foundation
 
-// UserDefaults
-/*
-UserDefaults.standard.set("value", forKey: "key")
-let value = UserDefaults.standard.string(forKey: "key")
-UserDefaults.standard.removeObject(forKey: "key")
-*/
-
-
 class AuthService {
     static let shared = AuthService()
     private let tokenKey = "authToken"
