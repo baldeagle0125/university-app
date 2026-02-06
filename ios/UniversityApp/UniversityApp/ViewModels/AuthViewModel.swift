@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 class AuthViewModel: ObservableObject {
     @Published var isAuthenticated: Bool = false
@@ -20,8 +21,13 @@ class AuthViewModel: ObservableObject {
     }
     
     func login(studentNumber: String, password: String) async {
-        if NetworkService.login(studentNumber: studentNumber, password: password) {
-            
+        do {
+            let token = try await NetworkService.shared.login(studentNumber: studentNumber, password: password)
+            AuthService.shared.saveToken(token: token)
+            self.isAuthenticated = true
+        } catch {
+            self.errorMessage = "Login failed: \(error.localizedDescription)"
+            self.isAuthenticated = false
         }
     }
     
