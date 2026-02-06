@@ -64,7 +64,7 @@ struct LoginPage: View {
             .alert("Login Failed", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(authViewModel.errorMessage ?? "Unknown error occured")
+                Text(authViewModel.errorMessage ?? "Unknown error occurred")
             }
             .onChange(of: authViewModel.errorMessage) { oldValue, newValue in
                 if newValue != nil {
