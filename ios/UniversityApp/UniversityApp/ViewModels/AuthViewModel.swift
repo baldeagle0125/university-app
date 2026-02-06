@@ -21,13 +21,15 @@ class AuthViewModel: ObservableObject {
     }
     
     func login(studentNumber: String, password: String) async {
+        errorMessage = nil
+        
         do {
             let token = try await NetworkService.shared.login(studentNumber: studentNumber, password: password)
             AuthService.shared.saveToken(token: token)
-            self.isAuthenticated = true
+            isAuthenticated = true
         } catch {
-            self.errorMessage = "Login failed: \(error.localizedDescription)"
-            self.isAuthenticated = false
+            errorMessage = error.localizedDescription
+            isAuthenticated = false
         }
     }
     

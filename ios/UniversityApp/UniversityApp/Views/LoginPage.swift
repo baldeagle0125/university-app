@@ -13,6 +13,7 @@ struct LoginPage: View {
     @State private var studentNumber: String = ""
     @State private var password: String = ""
     @State private var isLoading: Bool = false
+    @State private var showAlert: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -37,14 +38,6 @@ struct LoginPage: View {
                     .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 30))
                     .disabled(isLoading)
                 
-                if let errorMessage = authViewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                        // What is padding horizontal?
-                        .padding(.horizontal)
-                }
-                
                 Button {
                     handleLogin()
                 } label: {
@@ -68,6 +61,17 @@ struct LoginPage: View {
             .navigationDestination(isPresented: $authViewModel.isAuthenticated) {
                 MainTabView().navigationBarBackButtonHidden()
             }
+            .alert("Login Failed", isPresented: $showAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(authViewModel.errorMessage ?? "Unknown error occured")
+            }
+            .onChange(of: authViewModel.errorMessage) { oldValue, newValue in
+                if newValue != nil {
+                    showAlert = true
+                    password = ""
+                }
+            }
         }
     }
     
@@ -83,4 +87,5 @@ struct LoginPage: View {
 
 #Preview {
     LoginPage()
+        .environmentObject(AuthViewModel())
 }

@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct ProfilePage: View {
+    @EnvironmentObject var authViewModel: AuthViewModel
+    
+    @State private var showLogoutAlert: Bool = false
+    
     var body: some View {
         VStack(alignment: .leading) {
             Text("Profile")
@@ -16,45 +20,25 @@ struct ProfilePage: View {
             
             Spacer()
             
-            Toggle(isOn: /*@START_MENU_TOKEN@*//*@PLACEHOLDER=Is On@*/.constant(true)/*@END_MENU_TOKEN@*/) {
-                Text("Weather Updates")
+            Button {
+                authViewModel.logout()
+            } label: {
+                Text("Logout")
+                    .font(.title2)
             }
-            
-            Divider()
-            
-            HStack {
-                Text("Light/Dark Model")
-                
-                Spacer()
-                
-                Picker(selection: /*@START_MENU_TOKEN@*/.constant(1)/*@END_MENU_TOKEN@*/, label: /*@START_MENU_TOKEN@*/Text("Picker")/*@END_MENU_TOKEN@*/) {
-                    Text("Auto").tag(1)
-                    Text("Light").tag(2)
-                    Text("Dark").tag(3)
-                }
-            }
-            
-            Spacer()
-            
-            Spacer()
-            
-            Spacer()
-            
-            Spacer()
-            
-            Spacer()
-            
-            Spacer()
-            
-            Spacer()
-            
-            Spacer()
-            
-            Spacer()
+            .padding()
+            .glassEffect(.regular.interactive())
+            .foregroundStyle(.red)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
         .background(Gradient(colors: backgroundColor))
+        .alert("Logout?", isPresented: $showLogoutAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Logout") {
+                authViewModel.logout()
+            }
+        }
     }
 }
 

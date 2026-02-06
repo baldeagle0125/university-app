@@ -7,12 +7,27 @@
 
 import Foundation
 
-enum NetworkError: Error {
+enum NetworkError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
-    case unathorized
+    case unauthorized
     case serverError(Int)
     case decodingError
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid server URL"
+        case .invalidResponse:
+            return "Invalid server response"
+        case .unauthorized:
+            return "Invalid student number or password"
+        case .serverError(let code):
+            return "Server error (Code: \(code))"
+        case .decodingError:
+            return "Failed to process server response"
+        }
+    }
 }
 
 class NetworkService {
@@ -52,7 +67,7 @@ class NetworkService {
         case 200:
             break
         case 401:
-            throw NetworkError.unathorized
+            throw NetworkError.unauthorized
         default:
             throw NetworkError.serverError(httpResponse.statusCode)
         }

@@ -13,8 +13,13 @@ struct UniversityAppApp: App {
     
     var body: some Scene {
         WindowGroup {
-            WelcomePage()
-                .environmentObject(authViewModel)
+            if authViewModel.isAuthenticated {
+                MainTabView()
+                    .environmentObject(authViewModel)
+            } else {
+                WelcomePage()
+                    .environmentObject(authViewModel)
+            }
         }
     }
 }
