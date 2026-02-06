@@ -44,4 +44,5 @@ struct ProfilePage: View {
 
 #Preview {
     ProfilePage()
+        .environmentObject(AuthViewModel())
 }
