@@ -2,6 +2,7 @@ package server
 
 import (
 	"database/sql"
+	"university-app/config"
 	"university-app/handler"
 	"university-app/repository"
 
@@ -9,6 +10,8 @@ import (
 )
 
 func routes(r *chi.Mux, db *sql.DB) {
+	jwtSecret := config.ReadJWTSecretKey()
+
 	r.Get("/api/v1/health", handler.HealthEndpointHandler)
 
 	studentRepo := repository.NewStudentRepository(db)
@@ -20,4 +23,7 @@ func routes(r *chi.Mux, db *sql.DB) {
 	r.Put("/api/v1/students/{id}", studentHandler.UpdateStudent)
 	r.Patch("/api/v1/students/{id}", studentHandler.PartialUpdateStudent)
 	r.Delete("/api/v1/students/{id}", studentHandler.DeleteStudent)
+
+	authHandler := handler.NewAuthHandler(studentRepo, jwtSecret)
+	r.Post("/api/v1/login", authHandler.Login)
 }

@@ -11,12 +11,9 @@ import (
 func main() {
 	fmt.Println("This is the University App server application.")
 
-	// Connect to the database
 	db := config.ConnectToDatabase()
 
-	// Run database migrations
 	config.RunMigrations(db)
 
-	// Setting up HTTP server
 	server.StartServer(db)
 }

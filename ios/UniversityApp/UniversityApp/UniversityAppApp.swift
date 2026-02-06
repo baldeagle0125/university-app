@@ -9,9 +9,17 @@ import SwiftUI
 
 @main
 struct UniversityAppApp: App {
+    @StateObject private var authViewModel = AuthViewModel()
+    
     var body: some Scene {
         WindowGroup {
-            WelcomePage()
+            if authViewModel.isAuthenticated {
+                MainTabView()
+                    .environmentObject(authViewModel)
+            } else {
+                WelcomePage()
+                    .environmentObject(authViewModel)
+            }
         }
     }
 }

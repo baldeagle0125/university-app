@@ -53,3 +53,7 @@ func (h *StudentHandler) PartialUpdateStudent(w http.ResponseWriter, r *http.Req
 func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not implemented yet", http.StatusNotImplemented)
 }
+
+func (h *StudentHandler) GetStudentByStudentID(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Not implemented yet", http.StatusNotImplemented)
+}

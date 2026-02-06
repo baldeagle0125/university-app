@@ -22,6 +22,7 @@ services:
       - 3333:3333
     secrets:
       - db-password
+      - jwt-secret-key
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
@@ -42,8 +43,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-    expose:
-      - 5432
+    ports:
+      - 5432:5432
     healthcheck:
       test: [ "CMD", "pg_isready" ]
       interval: 10s
@@ -55,4 +56,6 @@ volumes:
   db-data:
 secrets:
   db-password:
-    file: ./db/password.txt
+    file: ./secrets/password.txt
+  jwt-secret-key:
+    file: ./secrets/secret_key.txt
