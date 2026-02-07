@@ -8,10 +8,10 @@
 import Foundation
 
 struct Student {
-    var id: Int
-    var studentNumber: String
-    var firstName: String
-    var lastName: String
-    var email: String
-    var passwordHash: String
+    let id: Int
+    let studentNumber: String
+    let firstName: String
+    let lastName: String
+    let email: String
+    let passwordHash: String
 }
