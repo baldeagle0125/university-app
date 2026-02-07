@@ -79,4 +79,39 @@ class NetworkService {
         
         return loginResponse.token
     }
+    
+    func fetchQRCode() async throws -> QRCodeResponse {
+        let urlString: String = "\(baseURL)/api/v1/qr-code"
+        
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        // TODO: Add JWT token authorization
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+        
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        let qrCodeResponse = try jsonDecoder.decode(QRCodeResponse.self, from: data)
+        
+        return qrCodeResponse
+    }
 }
