@@ -57,7 +57,7 @@ volumes:
   db-data:
 secrets:
   db-password:
-    file: ./secrets/password.txt
+    file: ./secrets/db_password.txt
   jwt-secret-key:
     file: ./secrets/jwt_secret_key.txt
   qr-secret-key:
