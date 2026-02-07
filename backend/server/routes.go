@@ -5,12 +5,14 @@ import (
 	"university-app/config"
 	"university-app/handler"
 	"university-app/repository"
+	"university-app/service"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func routes(r *chi.Mux, db *sql.DB) {
 	jwtSecret := config.ReadJWTSecretKey()
+	qrSecret := config.ReadQRSecretKey()
 
 	r.Get("/api/v1/health", handler.HealthEndpointHandler)
 
@@ -26,4 +28,8 @@ func routes(r *chi.Mux, db *sql.DB) {
 
 	authHandler := handler.NewAuthHandler(studentRepo, jwtSecret)
 	r.Post("/api/v1/login", authHandler.Login)
+
+	qrService := service.NewQRService([]byte(qrSecret))
+	qrHandler := handler.NewQRHandler(qrService)
+	r.Get("/api/v1/qr-code", qrHandler.GenerateQRCode)
 }

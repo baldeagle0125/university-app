@@ -23,6 +23,7 @@ services:
     secrets:
       - db-password
       - jwt-secret-key
+      - qr-secret-key
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
@@ -58,4 +59,6 @@ secrets:
   db-password:
     file: ./secrets/password.txt
   jwt-secret-key:
-    file: ./secrets/secret_key.txt
+    file: ./secrets/jwt_secret_key.txt
+  qr-secret-key:
+    file: ./secrets/qr_secret_key.txt
