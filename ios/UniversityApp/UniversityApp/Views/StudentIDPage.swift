@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct StudentIDPage: View {
+    @StateObject private var studentViewModel = StudentViewModel()
+    @StateObject private var qrViewModel = StudentIDViewModel()
     @State private var flipped = false
     
     var body: some View {
@@ -20,10 +22,10 @@ struct StudentIDPage: View {
                 Spacer()
                 
                 ZStack {
-                    StudentIDFront()
+                    StudentIDFront(student: studentViewModel.student)
                         .opacity(flipped ? 0 : 1)
                     
-                    StudentIDBack()
+                    StudentIDBack(viewModel: qrViewModel)
                         .opacity(flipped ? 1 : 0)
                         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                 }
@@ -58,6 +60,9 @@ struct StudentIDPage: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
         .background(Gradient(colors: backgroundColor))
+        .task {
+            await studentViewModel.fetchStudentProfile()
+        }
     }
 }
 
