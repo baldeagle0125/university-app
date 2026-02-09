@@ -80,6 +80,45 @@ class NetworkService {
         return loginResponse.token
     }
     
+    func fetchProfile() async throws -> Student {
+        let urlString: String = "\(baseURL)/api/v1/student-info"
+        
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+        
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        let student = try jsonDecoder.decode(Student.self, from: data)
+        
+        return student
+    }
+    
     func fetchQRCode() async throws -> QRCodeResponse {
         let urlString: String = "\(baseURL)/api/v1/qr-code"
         
@@ -90,7 +129,10 @@ class NetworkService {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         
-        // TODO: Add JWT token authorization
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
