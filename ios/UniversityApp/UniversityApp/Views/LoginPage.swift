@@ -43,7 +43,6 @@ struct LoginPage: View {
                 } label: {
                     if isLoading {
                         ProgressView()
-                            .progressViewStyle(.circular)
                     } else {
                         Text("Login")
                             .font(.title2)
