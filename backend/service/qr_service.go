@@ -4,7 +4,10 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/skip2/go-qrcode"
@@ -50,6 +53,33 @@ func (s *QRService) GenerateQRCode(studentNumber string) ([]byte, time.Time, err
 }
 
 func (s *QRService) VerifyToken(token string) (string, error) {
-	// TODO
-	return "", nil
+	parts := strings.Split(token, ":")
+	if len(parts) != 3 {
+		return "", errors.New("invalid token format")
+	}
+
+	studentNumber := parts[0]
+	timestampStr := parts[1]
+	receivedSignature := parts[2]
+
+	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
+	if err != nil {
+		return "", errors.New("invalid timestamp")
+	}
+
+	expiresAt := time.Unix(timestamp, 0)
+	if time.Now().After(expiresAt) {
+		return "", errors.New("token has expired")
+	}
+
+	payload := fmt.Sprintf("%s:%s", studentNumber, timestampStr)
+	h := hmac.New(sha256.New, s.secretKey)
+	h.Write([]byte(payload))
+	expectedSignature := base64.URLEncoding.EncodeToString(h.Sum(nil))
+
+	if !hmac.Equal([]byte(receivedSignature), []byte(expectedSignature)) {
+		return "", errors.New("invalid signature")
+	}
+
+	return studentNumber, nil
 }

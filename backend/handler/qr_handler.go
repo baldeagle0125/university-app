@@ -5,27 +5,33 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+	"university-app/jwt"
 	"university-app/service"
 )
 
 type QRHandler struct {
 	qrService *service.QRService
+	jwtSecret string
 }
 
-func NewQRHandler(qrService *service.QRService) *QRHandler {
+func NewQRHandler(qrService *service.QRService, jwtSecret string) *QRHandler {
 	return &QRHandler{
 		qrService: qrService,
+		jwtSecret: jwtSecret,
 	}
 }
 
 type QRCodeResponse struct {
 	QRCode    string `json:"qr_code"`
-	Token     string `json:"token"`
 	ExpiresAt string `json:"expires_at"`
 }
 
 func (h *QRHandler) GenerateQRCode(w http.ResponseWriter, r *http.Request) {
-	studentNumber := "SETU000001"
+	studentNumber, err := jwt.ExtractStudentNumberFromRequest(r, h.jwtSecret)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	qrImageBytes, expiresAt, err := h.qrService.GenerateQRCode(studentNumber)
 	if err != nil {
@@ -37,7 +43,6 @@ func (h *QRHandler) GenerateQRCode(w http.ResponseWriter, r *http.Request) {
 
 	response := QRCodeResponse{
 		QRCode:    qrCodeBase64,
-		Token:     "",
 		ExpiresAt: expiresAt.Format(time.RFC3339),
 	}
 
