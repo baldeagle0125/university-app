@@ -1,15 +1,19 @@
 package service
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"image/png"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/code128"
 	"github.com/skip2/go-qrcode"
 )
 
@@ -50,6 +54,31 @@ func (s *QRService) GenerateQRCode(studentNumber string) ([]byte, time.Time, err
 	}
 
 	return qrCode, expiresAt, nil
+}
+
+func (s *QRService) GenerateBarcode(studentNumber string) ([]byte, time.Time, error) {
+	token, expiresAt, err := s.GenerateToken(studentNumber)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	barcodeImage, err := code128.Encode(token)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	scaledBarcode, err := barcode.Scale(barcodeImage, 400, 100)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	var buf bytes.Buffer
+	err = png.Encode(&buf, scaledBarcode)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	return buf.Bytes(), expiresAt, nil
 }
 
 func (s *QRService) VerifyToken(token string) (string, error) {
