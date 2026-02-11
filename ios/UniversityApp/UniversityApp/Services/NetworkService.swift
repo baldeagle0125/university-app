@@ -119,7 +119,7 @@ class NetworkService {
         return student
     }
     
-    func fetchQRCode() async throws -> QRCodeResponse {
+    func fetchQRCode() async throws -> CodeResponse {
         let urlString: String = "\(baseURL)/api/v1/qr-code"
         
         guard let url = URL(string: urlString) else {
@@ -152,8 +152,46 @@ class NetworkService {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
         
-        let qrCodeResponse = try jsonDecoder.decode(QRCodeResponse.self, from: data)
+        let codeResponse = try jsonDecoder.decode(CodeResponse.self, from: data)
         
-        return qrCodeResponse
+        return codeResponse
+    }
+    
+    func fetchBarcode() async throws -> CodeResponse {
+        let urlString: String = "\(baseURL)/api/v1/barcode"
+        
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+        
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        let codeResponse = try jsonDecoder.decode(CodeResponse.self, from: data)
+        
+        return codeResponse
     }
 }

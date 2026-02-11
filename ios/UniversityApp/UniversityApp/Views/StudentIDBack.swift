@@ -42,8 +42,8 @@ struct StudentIDBack: View {
                         if viewModel.isLoading {
                             ProgressView()
                                 .scaleEffect(1.5)
-                        } else if let qrCodeImage = viewModel.qrCodeImage {
-                            Image(uiImage: qrCodeImage)
+                        } else if let codeImage = viewModel.codeImage {
+                            Image(uiImage: codeImage)
                                 .resizable()
                                 .interpolation(.none)
                                 .scaledToFit()
@@ -59,7 +59,7 @@ struct StudentIDBack: View {
                             }
                             .foregroundColor(.red)
                         } else {
-                            Text("Tap to load QR code")
+                            Text("Tap to load code")
                                 .font(.caption)
                         }
                     }
@@ -69,13 +69,19 @@ struct StudentIDBack: View {
                 
                 Spacer()
                 
-                Picker("Code Type", selection: $selectedCode) {
+                Picker("Code Type", selection: $viewModel.currentCodeType) {
                     Text("QR-Code").tag(1)
                     Text("Barcode").tag(2)
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: selectedCode) { oldValue, newValue in
-                    // TODO: Implement barcode generation
+                    Task {
+                        if newValue == 1 {
+                            await viewModel.fetchQRCode()
+                        } else {
+                            await viewModel.fetchBarcode()
+                        }
+                    }
                 }
                 
                 Spacer()
