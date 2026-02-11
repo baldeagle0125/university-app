@@ -38,4 +38,5 @@ func routes(r *chi.Mux, db *sql.DB) {
 	qrHandler := handler.NewQRHandler(qrService, jwtSecret)
 	r.Get("/api/v1/qr-code", qrHandler.GenerateQRCode)
 	r.Get("/api/v1/barcode", qrHandler.GenerateBarcode)
+	r.Post("/api/v1/verify", qrHandler.VerifyCode)
 }

@@ -26,6 +26,16 @@ type CodeResponse struct {
 	ExpiresAt string `json:"expires_at"`
 }
 
+type VerifyRequest struct {
+	Token string `json:"token"`
+}
+
+type VerifyResponse struct {
+	IsValid       bool   `json:"is_valid"`
+	StudentNumber string `json:"student_number"`
+	Message       string `json:"message,omitempty"`
+}
+
 func (h *QRHandler) GenerateQRCode(w http.ResponseWriter, r *http.Request) {
 	studentNumber, err := jwt.ExtractStudentNumberFromRequest(r, h.jwtSecret)
 	if err != nil {
@@ -68,6 +78,45 @@ func (h *QRHandler) GenerateBarcode(w http.ResponseWriter, r *http.Request) {
 	response := CodeResponse{
 		Code:      barcodeBase64,
 		ExpiresAt: expiresAt.Format(time.RFC3339),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *QRHandler) VerifyCode(w http.ResponseWriter, r *http.Request) {
+	var veryfyRequest VerifyRequest
+	err := json.NewDecoder(r.Body).Decode(&veryfyRequest)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if veryfyRequest.Token == "" {
+		reponse := VerifyResponse{
+			IsValid: false,
+			Message: "Token is required",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(reponse)
+		return
+	}
+
+	studentNumber, err := h.qrService.VerifyToken(veryfyRequest.Token)
+	if err != nil {
+		response := VerifyResponse{
+			IsValid: false,
+			Message: err.Error(),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	response := VerifyResponse{
+		IsValid:       true,
+		StudentNumber: studentNumber,
+		Message:       "Valid student ID",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
