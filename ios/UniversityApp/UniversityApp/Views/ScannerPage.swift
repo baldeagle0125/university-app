@@ -77,6 +77,7 @@ struct ScannerPage: View {
                         .background(.blue)
                         .foregroundStyle(.white)
                         .cornerRadius(10)
+                        .glassEffect(.regular.interactive())
                     }
                     .padding()
                     .background(Color.black.opacity(0.7))
@@ -98,6 +99,7 @@ struct ScannerPage: View {
                             .foregroundStyle(.white)
                             .padding()
                     }
+                    .glassEffect(.regular.interactive())
                 }
                 
                 Spacer()

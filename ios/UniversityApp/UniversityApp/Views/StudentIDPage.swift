@@ -57,6 +57,8 @@ struct StudentIDPage: View {
                 .sheet(isPresented: $showScanner) {
                     ScannerPage()
                 }
+                .padding()
+                .glassEffect(.regular.interactive())
                 
                 Spacer()
             }
