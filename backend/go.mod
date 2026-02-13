@@ -1,15 +1,15 @@
 module university-app
 
-go 1.25.7
+go 1.26.0
 
 require (
+	github.com/boombuler/barcode v1.1.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 )
 
 require (
-	github.com/boombuler/barcode v1.1.0 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
