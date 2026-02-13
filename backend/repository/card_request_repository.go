@@ -44,7 +44,7 @@ func (r *CardRequestRepository) CreateCardRequest(ctx context.Context, studentNu
 	return &cardRequest, nil
 }
 
-func (r *CardRequestRepository) GetCardRequestsByID(ctx context.Context, id int) (*model.CardRequest, error) {
+func (r *CardRequestRepository) GetCardRequestByID(ctx context.Context, id int) (*model.CardRequest, error) {
 	query := `
 		SELECT id, student_number, request_type, request_reason, request_status, requested_at, processed_at, processed_by, admin_notes, created_at, updated_at
 		FROM card_requests
