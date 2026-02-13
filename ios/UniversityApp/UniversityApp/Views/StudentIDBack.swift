@@ -9,7 +9,6 @@ import SwiftUI
 
 struct StudentIDBack: View {
     @ObservedObject var viewModel: StudentIDViewModel
-    @State private var selectedCode: Int = 1
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -37,7 +36,7 @@ struct StudentIDBack: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 40)
                             .frame(width: 250, height: 250)
-                            .opacity(0.3)
+                            .foregroundStyle(.white)
                         
                         if viewModel.isLoading {
                             ProgressView()
@@ -74,7 +73,7 @@ struct StudentIDBack: View {
                     Text("Barcode").tag(2)
                 }
                 .pickerStyle(.segmented)
-                .onChange(of: selectedCode) { oldValue, newValue in
+                .onChange(of: viewModel.currentCodeType) { oldValue, newValue in
                     Task {
                         if newValue == 1 {
                             await viewModel.fetchQRCode()

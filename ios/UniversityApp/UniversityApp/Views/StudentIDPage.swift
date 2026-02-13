@@ -11,6 +11,7 @@ struct StudentIDPage: View {
     @StateObject private var studentViewModel = StudentViewModel()
     @StateObject private var qrViewModel = StudentIDViewModel()
     @State private var flipped = false
+    @State private var showScanner = false
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -47,10 +48,15 @@ struct StudentIDPage: View {
             HStack {
                 Spacer()
                 
-                Text("Scan")
-                    .font(.title2)
-                    .padding()
-                    .glassEffect(.regular.interactive())
+                Button {
+                    showScanner = true
+                } label: {
+                    Text("Scan")
+                        .font(.title2)
+                }
+                .sheet(isPresented: $showScanner) {
+                    ScannerPage()
+                }
                 
                 Spacer()
             }
