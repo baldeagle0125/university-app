@@ -1,9 +1,6 @@
 package model
 
-import (
-	"database/sql"
-	"time"
-)
+import "time"
 
 type StudentResponse struct {
 	ID              int     `json:"id"`
@@ -35,28 +32,4 @@ func (s *Student) ToResponse() StudentResponse {
 		CreatedAt:       s.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:       s.UpdatedAt.Format(time.RFC3339),
 	}
-}
-
-type LoginRequest struct {
-	StudentNumber string `json:"student_number"`
-	Password      string `json:"password"`
-}
-
-type LoginResponse struct {
-	Token string `json:"token"`
-}
-
-func nullStringToPtr(ns sql.NullString) *string {
-	if ns.Valid {
-		return &ns.String
-	}
-	return nil
-}
-
-func nullTimeToPtr(nt sql.NullTime) *string {
-	if nt.Valid {
-		str := nt.Time.Format(time.DateOnly)
-		return &str
-	}
-	return nil
 }
