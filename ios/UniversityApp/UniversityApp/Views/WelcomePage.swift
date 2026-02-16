@@ -37,7 +37,7 @@ struct WelcomePage: View {
                 HStack {
                     Spacer()
                     
-                    NavigationLink(destination: LoginPage()) {
+                    NavigationLink(destination: LoginPage().navigationBarBackButtonHidden()) {
                         Text("Continue")
                             .font(.title2)
                             .padding()

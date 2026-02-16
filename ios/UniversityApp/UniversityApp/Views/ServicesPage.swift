@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ServicesPage: View {
     let services: [Service] = [
-        Service(icon: "calendar", title: "Timetable", isAvailable: true),
+        Service(icon: "calendar", title: "Timetable", isAvailable: false),
         Service(icon: "map", title: "Campus Map", isAvailable: false),
         Service(icon: "books.vertical", title: "Courses", isAvailable: false),
         Service(icon: "gym.bag", title: "Gym", isAvailable: false),
@@ -37,7 +37,6 @@ struct ServicesPage: View {
                     RoundedRectangle(cornerRadius: 30)
                         .frame(height: 50)
                         .opacity(0.3)
-                        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 30))
                     
                     HStack {
                         Image(systemName: "magnifyingglass")
@@ -51,8 +50,8 @@ struct ServicesPage: View {
                             .foregroundStyle(.gray)
                     }
                     .padding(.horizontal)
-                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
                 }
+                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 30))
                 
                 LazyVGrid(columns: columns, spacing: 20) {
                     ForEach(services) { service in
