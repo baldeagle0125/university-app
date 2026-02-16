@@ -55,6 +55,6 @@ struct CardRequestResponse: Codable, Identifiable {
 
 struct CardRequestStatusResponse: Codable {
     let hasRequest: Bool
-    let request: CardRequestResponse??
+    let request: CardRequestResponse?
     let message: String?
 }

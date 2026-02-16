@@ -37,7 +37,7 @@ struct ProfilePage: View {
                     
                     Spacer()
                     
-                    Image(systemName: "shevron.right")
+                    Image(systemName: "chevron.right")
                         .foregroundStyle(.secondary)
                 }
                 .padding()

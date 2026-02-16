@@ -85,24 +85,24 @@ func (h *QRHandler) GenerateBarcode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *QRHandler) VerifyCode(w http.ResponseWriter, r *http.Request) {
-	var veryfyRequest VerifyRequest
-	err := json.NewDecoder(r.Body).Decode(&veryfyRequest)
+	var verifyRequest VerifyRequest
+	err := json.NewDecoder(r.Body).Decode(&verifyRequest)
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	if veryfyRequest.Token == "" {
-		reponse := VerifyResponse{
+	if verifyRequest.Token == "" {
+		response := VerifyResponse{
 			IsValid: false,
 			Message: "Token is required",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(reponse)
+		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	studentNumber, err := h.qrService.VerifyToken(veryfyRequest.Token)
+	studentNumber, err := h.qrService.VerifyToken(verifyRequest.Token)
 	if err != nil {
 		response := VerifyResponse{
 			IsValid: false,
