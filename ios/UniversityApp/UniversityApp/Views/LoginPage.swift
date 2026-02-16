@@ -9,6 +9,7 @@ import SwiftUI
 
 struct LoginPage: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Environment(\.dismiss) var dismiss
     
     @State private var studentNumber: String = ""
     @State private var password: String = ""
@@ -17,14 +18,10 @@ struct LoginPage: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                HStack {
-                    Text("Login")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    
-                    Spacer()
-                }
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Login")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
                 
                 Spacer()
                 
@@ -38,21 +35,49 @@ struct LoginPage: View {
                     .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 30))
                     .disabled(isLoading)
                 
-                Button {
-                    handleLogin()
-                } label: {
-                    if isLoading {
-                        ProgressView()
-                    } else {
-                        Text("Login")
-                            .font(.title2)
+                HStack {
+                    Spacer()
+                    
+                    Button {
+                        handleLogin()
+                    } label: {
+                        if isLoading {
+                            ProgressView()
+                        } else {
+                            Text("Login")
+                                .font(.title2)
+                        }
                     }
+                    .padding()
+                    .frame(width: 100, height: 50)
+                    .glassEffect(.regular.interactive())
+                    .disabled(isLoading || studentNumber.isEmpty || password.isEmpty)
+                    
+                    Spacer()
                 }
-                .padding()
-                .glassEffect(.regular.interactive())
-                .disabled(isLoading || studentNumber.isEmpty || password.isEmpty)
                 
                 Spacer()
+                
+                HStack {
+                    Spacer()
+                    
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            
+                            Text("Back")
+                        }
+                        .font(.headline)
+                        .foregroundStyle(.black)
+                        .padding()
+                        .glassEffect(.regular.interactive())
+                    }
+                    .disabled(isLoading)
+                    
+                    Spacer()
+                }
             }
             .frame(maxWidth: .infinity)
             .padding()
