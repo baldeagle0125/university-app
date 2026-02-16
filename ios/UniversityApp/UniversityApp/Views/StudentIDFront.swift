@@ -115,42 +115,41 @@ struct StudentIDFront: View {
     
     @ViewBuilder
     private func statusBadge(status: String, hasPendingRequest: Bool) -> some View {
-        if hasPendingRequest {
-            HStack(spacing: 4) {
-                Image(systemName: "clock.fill")
-                    .font(.caption2)
-                
-                Text("Pending Request")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(.orange)
-            .foregroundStyle(.white)
-            .cornerRadius(8)
-            .shadow(radius: 2)
-        } else {
-            let (icon, color, text) = statusInfo(status: status)
+        let (icon, color, text) = determineBadgeInfo(status: status, hasPendingRequest: hasPendingRequest)
+        
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
             
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption2)
-                
-                Text(text)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(color)
-            .foregroundStyle(.white)
-            .cornerRadius(8)
-            .shadow(radius: 2)
+            Text(text)
+                .font(.caption)
+                .fontWeight(.semibold)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(color)
+        .foregroundStyle(.white)
+        .cornerRadius(8)
+        .shadow(radius: 2)
     }
     
-    private func statusInfo(status: String) -> (icon: String, Color: Color, text: String) {
+    private func determineBadgeInfo(status: String, hasPendingRequest: Bool) -> (icon: String, color: Color, text: String) {
+        if status.lowercased() == "lost" {
+            if hasPendingRequest {
+                return ("exclamationmark.triangle.fill", .orange, "Lost – Pending")
+            } else {
+                return ("xmark.circle.fill", .red, "Lost")
+            }
+        }
+        
+        if hasPendingRequest {
+            return ("clock.fill", .orange, "Pending Request")
+        }
+        
+        return statusInfo(status: status)
+    }
+    
+    private func statusInfo(status: String) -> (icon: String, color: Color, text: String) {
         switch status.lowercased() {
         case "active":
             return ("checkmark.circle.fill", .green, "Active")
