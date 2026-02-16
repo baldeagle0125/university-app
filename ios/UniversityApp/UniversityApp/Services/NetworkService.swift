@@ -22,10 +22,14 @@ enum NetworkError: Error, LocalizedError {
             return "Invalid server response"
         case .unauthorized:
             return "Invalid student number or password"
-        case .serverError(let code):
+        case .serverError(let code as Int):
             return "Server error (Code: \(code))"
+        case .serverError(let message as String):
+            return message
         case .decodingError:
             return "Failed to process server response"
+        default:
+            return "An unknown error occurred"
         }
     }
 }
@@ -234,5 +238,136 @@ class NetworkService {
         let verifyResponse = try jsonDecoder.decode(VerifyResponse.self, from: data)
         
         return verifyResponse
+    }
+    
+    func createCardRequest(requestType: String, requestReason: String) async throws -> CardRequestResponse {
+        let urlString: String = "\(baseURL)/api/v1/card/requests"
+        
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let requestBody = [
+            "request_type": requestType,
+            "request_reason": requestReason
+        ]
+        
+        let jsonEncoder = JSONEncoder()
+        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
+        
+        let jsonData = try jsonEncoder.encode(requestBody)
+        request.httpBody = jsonData
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 201:
+            break
+        case 400, 409:
+            if let errorMessage = String(data: data, encoding: .utf8) {
+                throw NetworkError.serverError(errorMessage)
+            }
+            throw NetworkError.serverError("Bad request")
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+        
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        let cardRequest = try jsonDecoder.decode(CardRequestResponse.self, from: data)
+        
+        return cardRequest
+    }
+    
+    func getCardRequests() async throws -> [CardRequestResponse] {
+        let urlString: String = "\(baseURL)/api/v1/card/requests"
+        
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        let requests = try jsonDecoder.decode([CardRequestResponse].self, from: data)
+        
+        return requests
+    }
+    
+    func getCardRequestStatus() async throws -> CardRequestStatusResponse {
+        let urlString: String = "\(baseURL)/api/v1/card/status"
+        
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+        
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        let status = try jsonDecoder.decode(CardRequestStatusResponse.self, from: data)
+        
+        return status
     }
 }
