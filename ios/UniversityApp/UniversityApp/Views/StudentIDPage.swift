@@ -10,6 +10,8 @@ import SwiftUI
 struct StudentIDPage: View {
     @StateObject private var studentViewModel = StudentViewModel()
     @StateObject private var qrViewModel = StudentIDViewModel()
+    @StateObject private var cardViewModel = CardManagementViewModel()
+    
     @State private var flipped = false
     @State private var showScanner = false
     
@@ -23,7 +25,7 @@ struct StudentIDPage: View {
                 Spacer()
                 
                 ZStack {
-                    StudentIDFront(student: studentViewModel.student)
+                    StudentIDFront(student: studentViewModel.student, hasPendingRequest: cardViewModel.hasActiveRequest)
                         .opacity(flipped ? 0 : 1)
                     
                     StudentIDBack(viewModel: qrViewModel)
@@ -70,6 +72,7 @@ struct StudentIDPage: View {
         .background(Gradient(colors: backgroundColor))
         .task {
             await studentViewModel.fetchStudentProfile()
+            await cardViewModel.fetchCardStatus()
         }
     }
 }

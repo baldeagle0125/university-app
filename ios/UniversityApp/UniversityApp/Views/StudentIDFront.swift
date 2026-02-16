@@ -9,6 +9,7 @@ import SwiftUI
 
 struct StudentIDFront: View {
     let student: Student?
+    var hasPendingRequest: Bool = false
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -94,6 +95,73 @@ struct StudentIDFront: View {
             }
             .padding(20)
             .frame(width: 325, height: 500)
+            
+            if let status = student?.cardStatus {
+                VStack {
+                    Spacer()
+                    
+                    HStack {
+                        Spacer()
+                        
+                        statusBadge(status: status, hasPendingRequest: hasPendingRequest)
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 20)
+                    }
+                }
+                .frame(width: 325, height: 500)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func statusBadge(status: String, hasPendingRequest: Bool) -> some View {
+        if hasPendingRequest {
+            HStack(spacing: 4) {
+                Image(systemName: "clock.fill")
+                    .font(.caption2)
+                
+                Text("Pending Request")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.orange)
+            .foregroundStyle(.white)
+            .cornerRadius(8)
+            .shadow(radius: 2)
+        } else {
+            let (icon, color, text) = statusInfo(status: status)
+            
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption2)
+                
+                Text(text)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(color)
+            .foregroundStyle(.white)
+            .cornerRadius(8)
+            .shadow(radius: 2)
+        }
+    }
+    
+    private func statusInfo(status: String) -> (icon: String, Color: Color, text: String) {
+        switch status.lowercased() {
+        case "active":
+            return ("checkmark.circle.fill", .green, "Active")
+        case "expired":
+            return ("exclamationmark.triangle.fill", .red, "Expired")
+        case "lost":
+            return ("xmark.circle.fill", .red, "Lost")
+        case "pending":
+            return ("clock.fill", .orange, "Pending")
+        default:
+            return ("questionmark.circle.fill", .gray, status.capitalized)
         }
     }
     
