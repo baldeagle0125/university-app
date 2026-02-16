@@ -8,6 +8,24 @@
 import SwiftUI
 
 struct ServicesPage: View {
+    let services: [Service] = [
+        Service(icon: "calendar", title: "Timetable", isAvailable: true),
+        Service(icon: "map", title: "Campus Map", isAvailable: false),
+        Service(icon: "books.vertical", title: "Courses", isAvailable: false),
+        Service(icon: "gym.bag", title: "Gym", isAvailable: false),
+        Service(icon: "hand.raised.palm.facing", title: "Voting", isAvailable: false),
+        Service(icon: "person.3", title: "Channels", isAvailable: false),
+        Service(icon: "fork.knife", title: "Canteen", isAvailable: false),
+        Service(icon: "book.closed", title: "Library", isAvailable: false),
+        Service(icon: "bus", title: "Transport", isAvailable: false),
+        Service(icon: "eurosign.circle", title: "Payments", isAvailable: false)
+    ]
+    
+    let columns = [
+        GridItem(.flexible(), spacing: 20),
+        GridItem(.flexible(), spacing: 20)
+    ]
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -17,7 +35,7 @@ struct ServicesPage: View {
                 
                 ZStack {
                     RoundedRectangle(cornerRadius: 30)
-                        .frame(width: 350, height: 50)
+                        .frame(height: 50)
                         .opacity(0.3)
                         .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 30))
                     
@@ -25,208 +43,22 @@ struct ServicesPage: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(.gray)
                         
-                        Spacer()
-                        
                         Text("Search")
                             .foregroundStyle(.gray)
-                        
-                        Spacer()
-                        
-                        Spacer()
-                        
-                        Spacer()
-                        
-                        Spacer()
-                        
-                        Spacer()
-                        
-                        Spacer()
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Image(systemName: "microphone")
                             .foregroundStyle(.gray)
                     }
-                    .padding()
+                    .padding(.horizontal)
                 }
                 
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "calendar")
-                            
-                            Text("Timetable")
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "map")
-                            
-                            Text("Campus Map")
-                        }
+                LazyVGrid(columns: columns, spacing: 20) {
+                    ForEach(services) { service in
+                        ServiceCard(service: service)
                     }
                 }
-                
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "books.vertical")
-                            
-                            Text("Courses")
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "gym.bag")
-                            
-                            Text("Gym")
-                        }
-                    }
-                }
-                
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "hand.raised.palm.facing")
-                            
-                            Text("Voting")
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "person.3")
-                            
-                            Text("Channels")
-                        }
-                    }
-                }
-                
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "calendar")
-                            
-                            Text("Timetable")
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "map")
-                            
-                            Text("Campus Map")
-                        }
-                    }
-                }
-                
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "books.vertical")
-                            
-                            Text("Courses")
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "gym.bag")
-                            
-                            Text("Gym")
-                        }
-                    }
-                }
-                
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "hand.raised.palm.facing")
-                            
-                            Text("Voting")
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .frame(width: 150, height: 150)
-                            .opacity(0.3)
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack {
-                            Image(systemName: "person.3")
-                            
-                            Text("Channels")
-                        }
-                    }
-                }
+                .padding(.top, 10)
             }
             .padding(30)
         }
