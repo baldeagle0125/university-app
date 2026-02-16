@@ -51,6 +51,7 @@ struct ServicesPage: View {
                             .foregroundStyle(.gray)
                     }
                     .padding(.horizontal)
+                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
                 }
                 
                 LazyVGrid(columns: columns, spacing: 20) {
