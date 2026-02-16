@@ -12,6 +12,7 @@ enum NetworkError: Error, LocalizedError {
     case invalidResponse
     case unauthorized
     case serverError(Int)
+    case serverErrorMessage(String)
     case decodingError
     
     var errorDescription: String? {
@@ -22,14 +23,12 @@ enum NetworkError: Error, LocalizedError {
             return "Invalid server response"
         case .unauthorized:
             return "Invalid student number or password"
-        case .serverError(let code as Int):
+        case .serverError(let code):
             return "Server error (Code: \(code))"
-        case .serverError(let message as String):
+        case .serverErrorMessage(let message):
             return message
         case .decodingError:
             return "Failed to process server response"
-        default:
-            return "An unknown error occurred"
         }
     }
 }
@@ -278,9 +277,9 @@ class NetworkService {
             break
         case 400, 409:
             if let errorMessage = String(data: data, encoding: .utf8) {
-                throw NetworkError.serverError(errorMessage)
+                throw NetworkError.serverErrorMessage(errorMessage)
             }
-            throw NetworkError.serverError("Bad request")
+            throw NetworkError.serverErrorMessage("Bad request")
         case 401:
             throw NetworkError.unauthorized
         default:
