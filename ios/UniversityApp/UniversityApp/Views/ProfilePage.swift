@@ -43,9 +43,10 @@ struct ProfilePage: View {
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(.ultraThinMaterial)
-                .cornerRadius(12)
+                .cornerRadius(20)
             }
             .foregroundStyle(.primary)
+            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
             
             Spacer()
             
