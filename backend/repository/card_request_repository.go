@@ -18,7 +18,7 @@ func NewCardRequestRepository(db *sql.DB) *CardRequestRepository {
 
 func (r *CardRequestRepository) CreateCardRequest(ctx context.Context, studentNumber, requestType, requestReason string) (*model.CardRequest, error) {
 	query := `
-		INSERT INTO card_requests (student_number, request_type, request_reason, status)
+		INSERT INTO card_requests (student_number, request_type, request_reason, request_status)
 		VALUES ($1, $2, $3, 'pending')
 		RETURNING id, student_number, request_type, request_reason, request_status, requested_at, processed_at, processed_by, admin_notes, created_at, updated_at
 	`
