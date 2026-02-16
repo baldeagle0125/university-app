@@ -8,7 +8,12 @@
 import SwiftUI
 
 struct StudentIDPage: View {
+    @StateObject private var studentViewModel = StudentViewModel()
+    @StateObject private var qrViewModel = StudentIDViewModel()
+    @StateObject private var cardViewModel = CardManagementViewModel()
+    
     @State private var flipped = false
+    @State private var showScanner = false
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -20,10 +25,10 @@ struct StudentIDPage: View {
                 Spacer()
                 
                 ZStack {
-                    StudentIDFront()
+                    StudentIDFront(student: studentViewModel.student, hasPendingRequest: cardViewModel.hasActiveRequest)
                         .opacity(flipped ? 0 : 1)
                     
-                    StudentIDBack()
+                    StudentIDBack(viewModel: qrViewModel)
                         .opacity(flipped ? 1 : 0)
                         .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                 }
@@ -45,10 +50,17 @@ struct StudentIDPage: View {
             HStack {
                 Spacer()
                 
-                Text("Scan")
-                    .font(.title2)
-                    .padding()
-                    .glassEffect(.regular.interactive())
+                Button {
+                    showScanner = true
+                } label: {
+                    Text("Scan")
+                        .font(.title2)
+                }
+                .sheet(isPresented: $showScanner) {
+                    ScannerPage()
+                }
+                .padding()
+                .glassEffect(.regular.interactive())
                 
                 Spacer()
             }
@@ -58,6 +70,16 @@ struct StudentIDPage: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
         .background(Gradient(colors: backgroundColor))
+        .task {
+            await studentViewModel.fetchStudentProfile()
+            await cardViewModel.fetchCardStatus()
+        }
+        .onAppear() {
+            Task {
+                await studentViewModel.fetchStudentProfile()
+                await cardViewModel.fetchCardStatus()
+            }
+        }
     }
 }
 

@@ -18,7 +18,7 @@ func NewStudentRepository(db *sql.DB) *StudentRepository {
 
 func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error) {
 	query := `
-		SELECT id, student_number, first_name, last_name, email, password_hash
+		SELECT id, student_number, first_name, last_name, email, password_hash, program_code, card_issued_date, card_expiry_date, profile_photo_url, card_status, created_at, updated_at
 		FROM students
 		ORDER BY last_name, first_name
 	`
@@ -41,6 +41,13 @@ func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error)
 			&student.LastName,
 			&student.Email,
 			&student.PasswordHash,
+			&student.ProgramCode,
+			&student.CardIssuedDate,
+			&student.CardExpiryDate,
+			&student.ProfilePhotoURL,
+			&student.CardStatus,
+			&student.CreatedAt,
+			&student.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -58,7 +65,7 @@ func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error)
 
 func (r *StudentRepository) GetByStudentNumber(ctx context.Context, studentNumber string) (*model.Student, error) {
 	query := `
-		SELECT id, student_number, first_name, last_name, email, password_hash
+		SELECT id, student_number, first_name, last_name, email, password_hash, program_code, card_issued_date, card_expiry_date, profile_photo_url, card_status, created_at, updated_at
 		FROM students
 		WHERE student_number = $1
 	`
@@ -73,6 +80,13 @@ func (r *StudentRepository) GetByStudentNumber(ctx context.Context, studentNumbe
 		&student.LastName,
 		&student.Email,
 		&student.PasswordHash,
+		&student.ProgramCode,
+		&student.CardIssuedDate,
+		&student.CardExpiryDate,
+		&student.ProfilePhotoURL,
+		&student.CardStatus,
+		&student.CreatedAt,
+		&student.UpdatedAt,
 	)
 
 	if err == sql.ErrNoRows {

@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct StudentIDBack: View {
+    @ObservedObject var viewModel: StudentIDViewModel
+    
     var body: some View {
         ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 40)
@@ -21,7 +23,7 @@ struct StudentIDBack: View {
                 HStack {
                     Spacer()
                     
-                    Text("Expires in 1:59 minutes")
+                    Text("Expires in \(viewModel.timeRemaining)")
                     
                     Spacer()
                 }
@@ -31,31 +33,69 @@ struct StudentIDBack: View {
                 HStack {
                     Spacer()
                     
-                    RoundedRectangle(cornerRadius: 40)
-                        .frame(width: 250, height: 250)
-                        .opacity(0.3)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 40)
+                            .frame(width: 250, height: 250)
+                            .foregroundStyle(.white)
+                        
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                        } else if let codeImage = viewModel.codeImage {
+                            Image(uiImage: codeImage)
+                                .resizable()
+                                .interpolation(.none)
+                                .scaledToFit()
+                                .frame(width: 250, height: 250)
+                                .clipShape(RoundedRectangle(cornerRadius: 40))
+                        } else if let error = viewModel.errorMessage {
+                            VStack {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.largeTitle)
+                                Text(error)
+                                    .font(.caption)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .foregroundColor(.red)
+                        } else {
+                            Text("Tap to load code")
+                                .font(.caption)
+                        }
+                    }
                     
                     Spacer()
                 }
                 
                 Spacer()
                 
-                Picker(selection: /*@START_MENU_TOKEN@*/.constant(1)/*@END_MENU_TOKEN@*/, label: /*@START_MENU_TOKEN@*/Text("Picker")/*@END_MENU_TOKEN@*/) {
+                Picker("Code Type", selection: $viewModel.currentCodeType) {
                     Text("QR-Code").tag(1)
                     Text("Barcode").tag(2)
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: viewModel.currentCodeType) { oldValue, newValue in
+                    Task {
+                        if newValue == 1 {
+                            await viewModel.fetchQRCode()
+                        } else {
+                            await viewModel.fetchBarcode()
+                        }
+                    }
+                }
                 
                 Spacer()
             }
             .padding(20)
             .frame(width: 325, height: 500)
         }
+        .task {
+            await viewModel.fetchQRCode()
+        }
     }
 }
 
 #Preview {
-    StudentIDBack()
+    StudentIDBack(viewModel: StudentIDViewModel())
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Gradient(colors: backgroundColor))
 }

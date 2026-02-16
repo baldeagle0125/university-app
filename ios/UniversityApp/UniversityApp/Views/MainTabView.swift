@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  MainTabView.swift
 //  UniversityApp
 //
 //  Created by Ihor Melashchenko on 23/01/2026.

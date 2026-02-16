@@ -1,4 +1,5 @@
 .DS_Store
 *.xcuserstate
-backend/secrets/password.txt
-backend/secrets/secret_key.txt
+backend/secrets/db_password.txt
+backend/secrets/jwt_secret_key.txt
+backend/secrets/qr_secret_key.txt
