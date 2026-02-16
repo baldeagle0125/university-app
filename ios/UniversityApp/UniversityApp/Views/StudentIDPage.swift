@@ -74,6 +74,12 @@ struct StudentIDPage: View {
             await studentViewModel.fetchStudentProfile()
             await cardViewModel.fetchCardStatus()
         }
+        .onAppear() {
+            Task {
+                await studentViewModel.fetchStudentProfile()
+                await cardViewModel.fetchCardStatus()
+            }
+        }
     }
 }
 

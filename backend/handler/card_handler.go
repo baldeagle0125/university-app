@@ -107,20 +107,19 @@ func (h *CardHandler) GetCardRequestStatus(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if latestRequest == nil {
+	if latestRequest != nil && latestRequest.RequestStatus == "pending" {
+		response := latestRequest.ToResponse()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"has_request": false,
-			"message":     "No card requests found",
+		json.NewEncoder(w).Encode(map[string]any{
+			"has_request": true,
+			"request":     response,
 		})
 		return
 	}
 
-	response := latestRequest.ToResponse()
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"has_request": true,
-		"request":     response,
+	json.NewEncoder(w).Encode(map[string]any{
+		"has_request": false,
 	})
 }
 

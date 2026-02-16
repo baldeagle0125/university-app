@@ -24,6 +24,8 @@ class CardManagementViewModel: ObservableObject {
         
         do {
             cardRequests = try await networkService.getCardRequests()
+            
+            updateActiveRequestStatus()
         } catch let error as NetworkError {
             errorMessage = error.errorDescription
         } catch {
@@ -70,6 +72,12 @@ class CardManagementViewModel: ObservableObject {
     func clearMessages() {
         errorMessage = nil
         successMessage = nil
+    }
+    
+    private func updateActiveRequestStatus() {
+        hasActiveRequest = cardRequests.contains {
+            $0.requestStatus == "pending"
+        }
     }
     
     var pendingRequest: CardRequestResponse? {
