@@ -14,12 +14,20 @@ struct Student: Codable {
     let lastName: String
     let email: String
     let programCode: String?
+    let courseTitle: String?
+    let dateOfBirth: String?
+    let suPosition: String?
+    let memberships: [String]
     let cardIssuedDate: String?
     let cardExpiryDate: String?
     let profilePhotoUrl: String?
     let cardStatus: String
     let createdAt: String
     let updatedAt: String
+
+    var fullName: String {
+        "\(firstName) \(lastName)"
+    }
     
     var cardIssuedDateObject: Date? {
         guard let dateString = cardIssuedDate else {
@@ -29,6 +37,17 @@ struct Student: Codable {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         
+        return formatter.date(from: dateString)
+    }
+
+    var dateOfBirthObject: Date? {
+        guard let dateString = dateOfBirth else {
+            return nil
+        }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+
         return formatter.date(from: dateString)
     }
     
