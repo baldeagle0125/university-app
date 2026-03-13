@@ -18,7 +18,7 @@ func NewStudentRepository(db *sql.DB) *StudentRepository {
 
 func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error) {
 	query := `
-		SELECT id, student_number, first_name, last_name, email, password_hash, program_code, card_issued_date, card_expiry_date, profile_photo_url, card_status, created_at, updated_at
+		SELECT id, student_number, first_name, last_name, email, password_hash, program_code, course_title, date_of_birth, su_position, card_issued_date, card_expiry_date, profile_photo_url, card_status, created_at, updated_at
 		FROM students
 		ORDER BY last_name, first_name
 	`
@@ -42,6 +42,9 @@ func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error)
 			&student.Email,
 			&student.PasswordHash,
 			&student.ProgramCode,
+			&student.CourseTitle,
+			&student.DateOfBirth,
+			&student.SUPosition,
 			&student.CardIssuedDate,
 			&student.CardExpiryDate,
 			&student.ProfilePhotoURL,
@@ -60,12 +63,21 @@ func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error)
 		return nil, err
 	}
 
+	for i := range students {
+		memberships, err := r.getMembershipsByStudentNumber(ctx, students[i].StudentNumber)
+		if err != nil {
+			return nil, err
+		}
+
+		students[i].Memberships = memberships
+	}
+
 	return students, nil
 }
 
 func (r *StudentRepository) GetByStudentNumber(ctx context.Context, studentNumber string) (*model.Student, error) {
 	query := `
-		SELECT id, student_number, first_name, last_name, email, password_hash, program_code, card_issued_date, card_expiry_date, profile_photo_url, card_status, created_at, updated_at
+		SELECT id, student_number, first_name, last_name, email, password_hash, program_code, course_title, date_of_birth, su_position, card_issued_date, card_expiry_date, profile_photo_url, card_status, created_at, updated_at
 		FROM students
 		WHERE student_number = $1
 	`
@@ -81,6 +93,9 @@ func (r *StudentRepository) GetByStudentNumber(ctx context.Context, studentNumbe
 		&student.Email,
 		&student.PasswordHash,
 		&student.ProgramCode,
+		&student.CourseTitle,
+		&student.DateOfBirth,
+		&student.SUPosition,
 		&student.CardIssuedDate,
 		&student.CardExpiryDate,
 		&student.ProfilePhotoURL,
@@ -97,5 +112,43 @@ func (r *StudentRepository) GetByStudentNumber(ctx context.Context, studentNumbe
 		return nil, err
 	}
 
+	memberships, err := r.getMembershipsByStudentNumber(ctx, studentNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	student.Memberships = memberships
+
 	return &student, nil
+}
+
+func (r *StudentRepository) getMembershipsByStudentNumber(ctx context.Context, studentNumber string) ([]string, error) {
+	query := `
+		SELECT membership_name
+		FROM student_memberships
+		WHERE student_number = $1
+		ORDER BY membership_name
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, studentNumber)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	memberships := []string{}
+	for rows.Next() {
+		var membership string
+		if err := rows.Scan(&membership); err != nil {
+			return nil, err
+		}
+
+		memberships = append(memberships, membership)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return memberships, nil
 }
