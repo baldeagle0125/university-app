@@ -13,6 +13,10 @@ type Student struct {
 	Email           string
 	PasswordHash    string
 	ProgramCode     sql.NullString
+	CourseTitle     sql.NullString
+	DateOfBirth     sql.NullTime
+	SUPosition      sql.NullString
+	Memberships     []string
 	CardIssuedDate  sql.NullTime
 	CardExpiryDate  sql.NullTime
 	ProfilePhotoURL sql.NullString
