@@ -74,6 +74,11 @@ func (h *StudentHandler) GetStudentByStudentNumber(w http.ResponseWriter, r *htt
 		return
 	}
 
+	if student == nil {
+		http.Error(w, "Student not found", http.StatusNotFound)
+		return
+	}
+
 	response := student.ToResponse()
 
 	w.Header().Set("Content-Type", "application/json")

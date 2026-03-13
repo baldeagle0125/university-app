@@ -27,32 +27,32 @@ struct ServicesPage: View {
     ]
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Services")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                ZStack {
-                    RoundedRectangle(cornerRadius: 30)
-                        .frame(height: 50)
-                        .opacity(0.3)
-                    
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.gray)
-                        
-                        Text("Search")
-                            .foregroundStyle(.gray)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Image(systemName: "microphone")
-                            .foregroundStyle(.gray)
-                    }
-                    .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Services")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 30)
+                    .frame(height: 50)
+                    .opacity(0.3)
+
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.gray)
+
+                    Text("Search")
+                        .foregroundStyle(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Image(systemName: "microphone")
+                        .foregroundStyle(.gray)
                 }
-                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 30))
-                
+                .padding(.horizontal)
+            }
+            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 30))
+
+            ScrollView {
                 LazyVGrid(columns: columns, spacing: 20) {
                     ForEach(services) { service in
                         ServiceCard(service: service)
@@ -60,8 +60,10 @@ struct ServicesPage: View {
                 }
                 .padding(.top, 10)
             }
-            .padding(30)
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(30)
         .background(Gradient(colors: backgroundColor))
     }
 }
