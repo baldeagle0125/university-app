@@ -7,7 +7,14 @@ One-page project showcase.
 Open directly in browser.
 
 ```bash
+# macOS
 open web/index.html
+
+# Windows
+start web/index.html
+
+# Linux
+xdg-open web/index.html
 ```
 
 ## Files
