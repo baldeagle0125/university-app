@@ -14,6 +14,8 @@ type FeedbackHandler struct {
 	jwtSecret string
 }
 
+const maxJSONBodyBytes int64 = 1 << 20 // 1 MiB
+
 func NewFeedbackHandler(repo *repository.FeedbackRepository, jwtSecret string) *FeedbackHandler {
 	return &FeedbackHandler{
 		repo:      repo,
@@ -27,6 +29,8 @@ func (h *FeedbackHandler) CreateFeedback(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
 
 	var input model.CreateFeedbackInput
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -57,6 +61,8 @@ func (h *FeedbackHandler) CreateTelemetryEvent(w http.ResponseWriter, r *http.Re
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
 
 	var input model.CreateTelemetryEventInput
 	if err = json.NewDecoder(r.Body).Decode(&input); err != nil {
