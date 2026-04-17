@@ -369,4 +369,126 @@ class NetworkService {
         
         return status
     }
+
+    func getAssignments() async throws -> [Assignment] {
+        let urlString: String = "\(baseURL)/api/v1/assignments"
+
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        return try jsonDecoder.decode([Assignment].self, from: data)
+    }
+
+    func getAssignment(assignmentId: Int) async throws -> Assignment {
+        let urlString: String = "\(baseURL)/api/v1/assignments/\(assignmentId)"
+
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        case 404:
+            throw NetworkError.serverErrorMessage("Assignment not found")
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        return try jsonDecoder.decode(Assignment.self, from: data)
+    }
+
+    func submitAssignmentText(assignmentId: Int, submissionText: String) async throws -> Assignment {
+        let urlString: String = "\(baseURL)/api/v1/assignments/\(assignmentId)/submit"
+
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let requestBody = SubmitAssignmentRequest(submissionText: submissionText)
+
+        let jsonEncoder = JSONEncoder()
+        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try jsonEncoder.encode(requestBody)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 400, 404, 409:
+            if let errorMessage = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !errorMessage.isEmpty {
+                throw NetworkError.serverErrorMessage(errorMessage)
+            }
+            throw NetworkError.serverErrorMessage("Could not submit assignment")
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        return try jsonDecoder.decode(Assignment.self, from: data)
+    }
 }
