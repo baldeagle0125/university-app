@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"university-app/jwt"
 	"university-app/model"
 	"university-app/repository"
@@ -26,62 +28,61 @@ func NewCardHandler(repo *repository.CardRequestRepository, jwtSecret string) *C
 func (h *CardHandler) CreateCardRequest(w http.ResponseWriter, r *http.Request) {
 	studentNumber, err := jwt.ExtractStudentNumberFromRequest(r, h.jwtSecret)
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	var input model.CreateCardRequestInput
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
 	if input.RequestType != "new" && input.RequestType != "replacement" && input.RequestType != "lost" {
-		http.Error(w, "Invalid request type. Must be 'new', 'replacement', or 'lost'", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid request type. Must be 'new', 'replacement', or 'lost'")
 		return
 	}
 
 	latestRequest, err := h.repo.GetLatestCardRequestByStudentNumber(r.Context(), studentNumber)
 	if err != nil {
-		http.Error(w, "Failed to check existing card requests", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to check existing card requests")
 		return
 	}
 
 	if latestRequest != nil && latestRequest.RequestStatus == "pending" {
-		http.Error(w, "You already have a pending card request", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "You already have a pending card request")
 		return
 	}
 
 	cardRequest, err := h.repo.CreateCardRequest(r.Context(), studentNumber, input.RequestType, input.RequestReason)
 	if err != nil {
-		http.Error(w, "Failed to create card request", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to create card request")
 		return
 	}
 
 	if input.RequestType == "lost" {
 		err = h.repo.UpdateStudentCardStatus(r.Context(), studentNumber, "lost")
 		if err != nil {
-
+			writeError(w, http.StatusInternalServerError, "Failed to update student card status")
+			return
 		}
 	}
 
 	response := cardRequest.ToResponse()
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, http.StatusCreated, response)
 }
 
 func (h *CardHandler) GetCardRequests(w http.ResponseWriter, r *http.Request) {
 	studentNumber, err := jwt.ExtractStudentNumberFromRequest(r, h.jwtSecret)
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	cardRequests, err := h.repo.GetCardRequestsByStudentNumber(r.Context(), studentNumber)
 	if err != nil {
-		http.Error(w, "Failed to fetch card requests", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to fetch card requests")
 		return
 	}
 
@@ -90,50 +91,51 @@ func (h *CardHandler) GetCardRequests(w http.ResponseWriter, r *http.Request) {
 		responses[i] = req.ToResponse()
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(responses)
+	writeJSON(w, http.StatusOK, responses)
 }
 
 func (h *CardHandler) GetCardRequestStatus(w http.ResponseWriter, r *http.Request) {
 	studentNumber, err := jwt.ExtractStudentNumberFromRequest(r, h.jwtSecret)
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		writeError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	latestRequest, err := h.repo.GetLatestCardRequestByStudentNumber(r.Context(), studentNumber)
 	if err != nil {
-		http.Error(w, "Failed to fetch card request status", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to fetch card request status")
 		return
 	}
 
 	if latestRequest != nil && latestRequest.RequestStatus == "pending" {
 		response := latestRequest.ToResponse()
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		writeJSON(w, http.StatusOK, map[string]any{
 			"has_request": true,
 			"request":     response,
 		})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"has_request": false,
 	})
 }
 
 func (h *CardHandler) GetPendingCardRequests(w http.ResponseWriter, r *http.Request) {
-	// TODO: Add admin authentication check
-	_, err := jwt.ExtractStudentNumberFromRequest(r, h.jwtSecret)
+	_, statusCode, err := h.requireAdminStaffNumber(r)
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
 		return
 	}
 
 	cardRequests, err := h.repo.GetPendingCardRequests(r.Context())
 	if err != nil {
-		http.Error(w, "Failed to fetch pending card requests", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to fetch pending card requests")
 		return
 	}
 
@@ -142,67 +144,82 @@ func (h *CardHandler) GetPendingCardRequests(w http.ResponseWriter, r *http.Requ
 		responses[i] = cr.ToResponse()
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(responses)
+	writeJSON(w, http.StatusOK, responses)
 }
 
 func (h *CardHandler) ProcessCardRequest(w http.ResponseWriter, r *http.Request) {
-	// TODO: Add admin authentication check
-	adminNumber, err := jwt.ExtractStudentNumberFromRequest(r, h.jwtSecret)
+	adminNumber, statusCode, err := h.requireAdminStaffNumber(r)
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
 		return
 	}
 
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid card request ID", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid card request ID")
 		return
 	}
 
 	var input model.ProcessCardRequest
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
 	if input.RequestStatus != "approved" && input.RequestStatus != "rejected" {
-		http.Error(w, "Invalid request status. Must be 'approved' or 'rejected'", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid request status. Must be 'approved' or 'rejected'")
 		return
 	}
 
 	cardRequest, err := h.repo.GetCardRequestByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Failed to fetch card request", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to fetch card request")
 		return
 	}
 	if cardRequest == nil {
-		http.Error(w, "Card request not found", http.StatusNotFound)
+		writeError(w, http.StatusNotFound, "Card request not found")
 		return
 	}
 
 	if cardRequest.RequestStatus != "pending" {
-		http.Error(w, "Card request has already been processed", http.StatusConflict)
+		writeError(w, http.StatusConflict, "Card request has already been processed")
 		return
 	}
 
-	// Temporary using student number in lieu of admin number until we implement proper admin authentication
 	updateRequest, err := h.repo.ProcessCardRequest(r.Context(), id, input.RequestStatus, adminNumber, input.AdminNotes)
 	if err != nil {
-		http.Error(w, "Failed to process card request", http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "Failed to process card request")
 		return
 	}
 
 	if input.RequestStatus == "approved" {
 		err = h.repo.UpdateStudentCardStatus(r.Context(), cardRequest.StudentNumber, "active")
 		if err != nil {
-
+			writeError(w, http.StatusInternalServerError, "Failed to update student card status")
+			return
 		}
 	}
 
 	response := updateRequest.ToResponse()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (h *CardHandler) requireAdminStaffNumber(r *http.Request) (string, int, error) {
+	staffNumber, role, err := jwt.ExtractStaffFromRequest(r, h.jwtSecret)
+	if err != nil {
+		return "", http.StatusUnauthorized, err
+	}
+
+	if strings.ToLower(role) != "admin" {
+		return "", http.StatusForbidden, errors.New("staff role is not admin")
+	}
+
+	return staffNumber, http.StatusOK, nil
 }

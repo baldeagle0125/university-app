@@ -2,6 +2,74 @@ package model
 
 import "time"
 
+type CreateStudentInput struct {
+	StudentNumber   string   `json:"student_number"`
+	FirstName       string   `json:"first_name"`
+	LastName        string   `json:"last_name"`
+	Email           string   `json:"email"`
+	Password        string   `json:"password"`
+	ProgramCode     *string  `json:"program_code"`
+	CourseTitle     *string  `json:"course_title"`
+	DateOfBirth     *string  `json:"date_of_birth"`
+	SUPosition      *string  `json:"su_position"`
+	Memberships     []string `json:"memberships"`
+	CardIssuedDate  *string  `json:"card_issued_date"`
+	CardExpiryDate  *string  `json:"card_expiry_date"`
+	ProfilePhotoURL *string  `json:"profile_photo_url"`
+	CardStatus      string   `json:"card_status"`
+}
+
+type UpdateStudentInput struct {
+	StudentNumber   string   `json:"student_number"`
+	FirstName       string   `json:"first_name"`
+	LastName        string   `json:"last_name"`
+	Email           string   `json:"email"`
+	Password        string   `json:"password"`
+	ProgramCode     *string  `json:"program_code"`
+	CourseTitle     *string  `json:"course_title"`
+	DateOfBirth     *string  `json:"date_of_birth"`
+	SUPosition      *string  `json:"su_position"`
+	Memberships     []string `json:"memberships"`
+	CardIssuedDate  *string  `json:"card_issued_date"`
+	CardExpiryDate  *string  `json:"card_expiry_date"`
+	ProfilePhotoURL *string  `json:"profile_photo_url"`
+	CardStatus      string   `json:"card_status"`
+}
+
+type PartialUpdateStudentInput struct {
+	StudentNumber   *string   `json:"student_number"`
+	FirstName       *string   `json:"first_name"`
+	LastName        *string   `json:"last_name"`
+	Email           *string   `json:"email"`
+	Password        *string   `json:"password"`
+	ProgramCode     *string   `json:"program_code"`
+	CourseTitle     *string   `json:"course_title"`
+	DateOfBirth     *string   `json:"date_of_birth"`
+	SUPosition      *string   `json:"su_position"`
+	Memberships     *[]string `json:"memberships"`
+	CardIssuedDate  *string   `json:"card_issued_date"`
+	CardExpiryDate  *string   `json:"card_expiry_date"`
+	ProfilePhotoURL *string   `json:"profile_photo_url"`
+	CardStatus      *string   `json:"card_status"`
+}
+
+func (i PartialUpdateStudentInput) HasUpdates() bool {
+	return i.StudentNumber != nil ||
+		i.FirstName != nil ||
+		i.LastName != nil ||
+		i.Email != nil ||
+		i.Password != nil ||
+		i.ProgramCode != nil ||
+		i.CourseTitle != nil ||
+		i.DateOfBirth != nil ||
+		i.SUPosition != nil ||
+		i.Memberships != nil ||
+		i.CardIssuedDate != nil ||
+		i.CardExpiryDate != nil ||
+		i.ProfilePhotoURL != nil ||
+		i.CardStatus != nil
+}
+
 type StudentResponse struct {
 	ID              int      `json:"id"`
 	StudentNumber   string   `json:"student_number"`

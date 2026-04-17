@@ -21,6 +21,7 @@ func routes(r *chi.Mux, db *sql.DB) {
 	r.Handle("/static/profile-photos/*", http.StripPrefix("/static/profile-photos/", fileServer))
 
 	studentRepo := repository.NewStudentRepository(db)
+	staffRepo := repository.NewStaffRepository(db)
 
 	studentHandler := handler.NewStudentHandler(studentRepo, jwtSecret)
 	r.Post("/api/v1/students", studentHandler.CreateStudent)
@@ -31,8 +32,9 @@ func routes(r *chi.Mux, db *sql.DB) {
 	r.Delete("/api/v1/students/{id}", studentHandler.DeleteStudent)
 	r.Get("/api/v1/student-info", studentHandler.GetStudentByStudentNumber)
 
-	authHandler := handler.NewAuthHandler(studentRepo, jwtSecret)
+	authHandler := handler.NewAuthHandler(studentRepo, staffRepo, jwtSecret)
 	r.Post("/api/v1/login", authHandler.Login)
+	r.Post("/api/v1/staff/login", authHandler.StaffLogin)
 
 	qrService := service.NewQRService([]byte(qrSecret))
 	qrHandler := handler.NewQRHandler(qrService, jwtSecret)
