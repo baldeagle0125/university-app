@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct ServicesPage: View {
+    @State private var showAssignmentTracker: Bool = false
+
     let services: [Service] = [
+        Service(icon: "doc.text", title: "Assignments", isAvailable: true),
         Service(icon: "calendar", title: "Timetable", isAvailable: false),
         Service(icon: "map", title: "Campus Map", isAvailable: false),
         Service(icon: "books.vertical", title: "Courses", isAvailable: false),
@@ -55,7 +58,16 @@ struct ServicesPage: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 20) {
                     ForEach(services) { service in
-                        ServiceCard(service: service)
+                        if service.isAvailable && service.title == "Assignments" {
+                            Button {
+                                showAssignmentTracker = true
+                            } label: {
+                                ServiceCard(service: service)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            ServiceCard(service: service)
+                        }
                     }
                 }
                 .padding(.top, 10)
@@ -65,6 +77,9 @@ struct ServicesPage: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(30)
         .background(Gradient(colors: backgroundColor))
+        .sheet(isPresented: $showAssignmentTracker) {
+            AssignmentTrackerPage()
+        }
     }
 }
 
