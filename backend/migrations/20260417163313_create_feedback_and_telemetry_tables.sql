@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE feedback_entries (
+CREATE TABLE IF NOT EXISTS feedback_entries (
     id SERIAL PRIMARY KEY,
     student_number VARCHAR(20) NOT NULL,
     feedback_type VARCHAR(20) NOT NULL,
@@ -18,10 +18,10 @@ CREATE TABLE feedback_entries (
         CHECK (rating IS NULL OR (rating >= 1 AND rating <= 5))
 );
 
-CREATE INDEX idx_feedback_entries_student_number ON feedback_entries(student_number);
-CREATE INDEX idx_feedback_entries_created_at ON feedback_entries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_entries_student_number ON feedback_entries(student_number);
+CREATE INDEX IF NOT EXISTS idx_feedback_entries_created_at ON feedback_entries(created_at DESC);
 
-CREATE TABLE telemetry_events (
+CREATE TABLE IF NOT EXISTS telemetry_events (
     id SERIAL PRIMARY KEY,
     student_number VARCHAR(20) NOT NULL,
     event_name VARCHAR(80) NOT NULL,
@@ -35,9 +35,9 @@ CREATE TABLE telemetry_events (
         FOREIGN KEY (student_number) REFERENCES students(student_number) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_telemetry_events_student_number ON telemetry_events(student_number);
-CREATE INDEX idx_telemetry_events_created_at ON telemetry_events(created_at DESC);
-CREATE INDEX idx_telemetry_events_event_name ON telemetry_events(event_name);
+CREATE INDEX IF NOT EXISTS idx_telemetry_events_student_number ON telemetry_events(student_number);
+CREATE INDEX IF NOT EXISTS idx_telemetry_events_created_at ON telemetry_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_telemetry_events_event_name ON telemetry_events(event_name);
 -- +goose StatementEnd
 
 -- +goose Down

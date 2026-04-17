@@ -1,11 +1,11 @@
 -- +goose Up
 -- +goose StatementBegin
 ALTER TABLE students
-ADD COLUMN course_title VARCHAR(150),
-ADD COLUMN date_of_birth DATE,
-ADD COLUMN su_position VARCHAR(100);
+ADD COLUMN IF NOT EXISTS course_title VARCHAR(150),
+ADD COLUMN IF NOT EXISTS date_of_birth DATE,
+ADD COLUMN IF NOT EXISTS su_position VARCHAR(100);
 
-CREATE TABLE student_memberships (
+CREATE TABLE IF NOT EXISTS student_memberships (
     id SERIAL PRIMARY KEY,
     student_number VARCHAR(20) NOT NULL,
     membership_name VARCHAR(100) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE student_memberships (
     CONSTRAINT uq_student_memberships_student_number_name UNIQUE (student_number, membership_name)
 );
 
-CREATE INDEX idx_student_memberships_student_number ON student_memberships(student_number);
+CREATE INDEX IF NOT EXISTS idx_student_memberships_student_number ON student_memberships(student_number);
 -- +goose StatementEnd
 
 -- +goose Down

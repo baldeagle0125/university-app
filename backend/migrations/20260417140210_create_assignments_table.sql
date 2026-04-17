@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE assignments (
+CREATE TABLE IF NOT EXISTS assignments (
     id SERIAL PRIMARY KEY,
     student_number VARCHAR(20) NOT NULL,
     title VARCHAR(200) NOT NULL,
@@ -15,9 +15,9 @@ CREATE TABLE assignments (
         FOREIGN KEY (student_number) REFERENCES students(student_number) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_assignments_student_number ON assignments(student_number);
-CREATE INDEX idx_assignments_due_date ON assignments(due_date);
-CREATE INDEX idx_assignments_status ON assignments(status);
+CREATE INDEX IF NOT EXISTS idx_assignments_student_number ON assignments(student_number);
+CREATE INDEX IF NOT EXISTS idx_assignments_due_date ON assignments(due_date);
+CREATE INDEX IF NOT EXISTS idx_assignments_status ON assignments(status);
 -- +goose StatementEnd
 
 -- +goose Down

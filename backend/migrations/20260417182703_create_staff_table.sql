@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE staff (
+CREATE TABLE IF NOT EXISTS staff (
     id SERIAL PRIMARY KEY,
     staff_number VARCHAR(20) UNIQUE NOT NULL,
     first_name VARCHAR(50) NOT NULL,
@@ -13,8 +13,8 @@ CREATE TABLE staff (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_staff_role ON staff(role);
-CREATE INDEX idx_staff_active_role ON staff(is_active, role);
+CREATE INDEX IF NOT EXISTS idx_staff_role ON staff(role);
+CREATE INDEX IF NOT EXISTS idx_staff_active_role ON staff(is_active, role);
 -- +goose StatementEnd
 
 -- +goose Down
