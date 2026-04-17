@@ -51,6 +51,12 @@ func routes(r *chi.Mux, db *sql.DB) {
 	r.Post("/api/v1/feedback", feedbackHandler.CreateFeedback)
 	r.Post("/api/v1/telemetry/events", feedbackHandler.CreateTelemetryEvent)
 
+	assignmentRepo := repository.NewAssignmentRepository(db)
+	assignmentHandler := handler.NewAssignmentHandler(assignmentRepo, jwtSecret)
+	r.Get("/api/v1/assignments", assignmentHandler.ListAssignments)
+	r.Get("/api/v1/assignments/{id}", assignmentHandler.GetAssignment)
+	r.Post("/api/v1/assignments/{id}/submit", assignmentHandler.SubmitAssignment)
+
 	r.Get("/api/v1/admin/card-requests", cardHandler.GetPendingCardRequests)
 	r.Post("/api/v1/admin/card-requests/{id}/process", cardHandler.ProcessCardRequest)
 }
