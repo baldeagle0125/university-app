@@ -1,6 +1,10 @@
 # University App Demo Website
 
-One-page project showcase.
+One-page project showcase website.
+
+## Overview
+This is a static frontend page used to present the project.
+It does not call backend APIs and does not require a build step.
 
 ## Quick Start
 

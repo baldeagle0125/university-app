@@ -1,22 +1,61 @@
-### Building and running your application
+# Backend Docker Guide
 
-When you're ready, start your application by running:
-`docker compose up --build`.
+## Services
+`compose.yaml` defines:
+- `server`: Go backend service on port `3333`
+- `db`: PostgreSQL service on port `5432`
 
-Your application will be available at http://localhost:3333.
+The backend runs migrations automatically on startup.
 
-### Deploying your application to the cloud
+## Prerequisites
+1. Docker Desktop (or Docker Engine + Compose plugin)
+2. Secret files:
+	- `backend/secrets/db_password.txt`
+	- `backend/secrets/jwt_secret_key.txt`
+	- `backend/secrets/qr_secret_key.txt`
+3. Environment variables in shell or `.env` file in `backend` directory:
+	- `POSTGRES_HOST`
+	- `POSTGRES_PORT`
+	- `POSTGRES_DB`
+	- `POSTGRES_USER`
 
-First, build your image, e.g.: `docker build -t myapp .`.
-If your cloud uses a different CPU architecture than your development
-machine (e.g., you are on a Mac M1 and your cloud provider is amd64),
-you'll want to build the image for that platform, e.g.:
-`docker build --platform=linux/amd64 -t myapp .`.
+Typical local values:
 
-Then, push it to your registry, e.g. `docker push myregistry.com/myapp`.
+```env
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=university_app
+POSTGRES_USER=postgres
+```
 
-Consult Docker's [getting started](https://docs.docker.com/go/get-started-sharing/)
-docs for more detail on building and pushing.
+## Start
 
-### References
-* [Docker's Go guide](https://docs.docker.com/language/golang/)
+```bash
+docker compose up --build
+```
+
+Backend API: `http://localhost:3333`
+
+## Stop
+
+```bash
+docker compose down
+```
+
+Remove containers + volumes:
+
+```bash
+docker compose down -v
+```
+
+## Logs
+
+```bash
+docker compose logs -f
+```
+
+## Common Issues
+- Missing secret file: check `backend/secrets/*.txt` names and paths.
+- DB connection failure: verify `POSTGRES_*` values and that `POSTGRES_HOST=db` for Compose mode.
+- Non-admin access to admin card endpoints: ensure you are authenticated via `POST /api/v1/staff/login` with a staff account that has `role='admin'`.
+- Port collision on `3333` or `5432`: stop conflicting local services or remap ports in `compose.yaml`.
