@@ -14,7 +14,7 @@ enum NetworkError: Error, LocalizedError {
     case serverError(Int)
     case serverErrorMessage(String)
     case decodingError
-    
+
     var errorDescription: String? {
         switch self {
         case .invalidURL:
@@ -33,341 +33,249 @@ enum NetworkError: Error, LocalizedError {
     }
 }
 
+private struct APIErrorResponse: Codable {
+    let error: String
+}
+
+private struct CreateCardRequestPayload: Codable {
+    let requestType: String
+    let requestReason: String
+}
+
 class NetworkService {
     static let shared = NetworkService()
-    
+
     private let baseURL: String = AppConfig.baseURL
-    
+
     private init() {}
-    
+
     func login(studentNumber: String, password: String) async throws -> String {
-        let urlString: String = "\(baseURL)/api/v1/login"
-        
+        let urlString = "\(baseURL)/api/v1/login"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         let loginRequest = LoginRequest(studentNumber: studentNumber, password: password)
-        
-        let jsonEncoder = JSONEncoder()
-        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
-        
-        let jsonData = try jsonEncoder.encode(loginRequest)
-        request.httpBody = jsonData
-        
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try encoder.encode(loginRequest)
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
-        
+
         switch httpResponse.statusCode {
         case 200:
             break
         case 401:
             throw NetworkError.unauthorized
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
         }
-        
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let loginResponse = try jsonDecoder.decode(LoginResponse.self, from: data)
-        
-        return loginResponse.token
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            let loginResponse = try decoder.decode(LoginResponse.self, from: data)
+            return loginResponse.token
+        } catch {
+            throw NetworkError.decodingError
+        }
     }
-    
+
     func fetchProfile() async throws -> Student {
-        let urlString: String = "\(baseURL)/api/v1/student-info"
-        
+        let urlString = "\(baseURL)/api/v1/student-info"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        
-        
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
+        try attachAuthorization(to: &request)
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
-        
+
         switch httpResponse.statusCode {
         case 200:
             break
         case 401:
             throw NetworkError.unauthorized
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
         }
-        
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let student = try jsonDecoder.decode(Student.self, from: data)
-        
-        return student
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode(Student.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
     }
-    
+
     func fetchQRCode() async throws -> CodeResponse {
-        let urlString: String = "\(baseURL)/api/v1/qr-code"
-        
-        guard let url = URL(string: urlString) else {
-            throw NetworkError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        switch httpResponse.statusCode {
-        case 200:
-            break
-        case 401:
-            throw NetworkError.unauthorized
-        default:
-            throw NetworkError.serverError(httpResponse.statusCode)
-        }
-        
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let codeResponse = try jsonDecoder.decode(CodeResponse.self, from: data)
-        
-        return codeResponse
+        try await fetchCodeResponse(path: "/api/v1/qr-code")
     }
-    
+
     func fetchBarcode() async throws -> CodeResponse {
-        let urlString: String = "\(baseURL)/api/v1/barcode"
-        
-        guard let url = URL(string: urlString) else {
-            throw NetworkError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        switch httpResponse.statusCode {
-        case 200:
-            break
-        case 401:
-            throw NetworkError.unauthorized
-        default:
-            throw NetworkError.serverError(httpResponse.statusCode)
-        }
-        
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let codeResponse = try jsonDecoder.decode(CodeResponse.self, from: data)
-        
-        return codeResponse
+        try await fetchCodeResponse(path: "/api/v1/barcode")
     }
-    
+
     func verifyCode(token: String) async throws -> VerifyResponse {
-        let urlString: String = "\(baseURL)/api/v1/verify"
-        
+        let urlString = "\(baseURL)/api/v1/verify"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let verifyRequest = VerifyRequest(token: token)
-        
-        let jsonEncoder = JSONEncoder()
-        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
-        
-        let jsonData = try jsonEncoder.encode(verifyRequest)
-        request.httpBody = jsonData
-        
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try encoder.encode(VerifyRequest(token: token))
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
-        
+
         switch httpResponse.statusCode {
         case 200:
             break
         case 401:
             throw NetworkError.unauthorized
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
         }
-        
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let verifyResponse = try jsonDecoder.decode(VerifyResponse.self, from: data)
-        
-        return verifyResponse
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode(VerifyResponse.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
     }
-    
+
     func createCardRequest(requestType: String, requestReason: String) async throws -> CardRequestResponse {
-        let urlString: String = "\(baseURL)/api/v1/card/requests"
-        
+        let urlString = "\(baseURL)/api/v1/card/requests"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        let requestBody = [
-            "request_type": requestType,
-            "request_reason": requestReason
-        ]
-        
-        let jsonEncoder = JSONEncoder()
-        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
-        
-        let jsonData = try jsonEncoder.encode(requestBody)
-        request.httpBody = jsonData
-        
+        try attachAuthorization(to: &request)
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try encoder.encode(
+            CreateCardRequestPayload(requestType: requestType, requestReason: requestReason)
+        )
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
-        
+
         switch httpResponse.statusCode {
         case 201:
             break
-        case 400, 409:
-            if let errorMessage = String(data: data, encoding: .utf8) {
-                throw NetworkError.serverErrorMessage(errorMessage)
-            }
-            throw NetworkError.serverErrorMessage("Bad request")
         case 401:
             throw NetworkError.unauthorized
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
         }
-        
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let cardRequest = try jsonDecoder.decode(CardRequestResponse.self, from: data)
-        
-        return cardRequest
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode(CardRequestResponse.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
     }
-    
+
     func getCardRequests() async throws -> [CardRequestResponse] {
-        let urlString: String = "\(baseURL)/api/v1/card/requests"
-        
+        let urlString = "\(baseURL)/api/v1/card/requests"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
+        try attachAuthorization(to: &request)
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
-        
+
         switch httpResponse.statusCode {
         case 200:
             break
         case 401:
             throw NetworkError.unauthorized
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
         }
 
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let requests = try jsonDecoder.decode([CardRequestResponse].self, from: data)
-        
-        return requests
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode([CardRequestResponse].self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
     }
-    
+
     func getCardRequestStatus() async throws -> CardRequestStatusResponse {
-        let urlString: String = "\(baseURL)/api/v1/card/status"
-        
+        let urlString = "\(baseURL)/api/v1/card/status"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
+        try attachAuthorization(to: &request)
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
-        
+
         switch httpResponse.statusCode {
         case 200:
             break
         case 401:
             throw NetworkError.unauthorized
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
         }
 
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-        
-        let status = try jsonDecoder.decode(CardRequestStatusResponse.self, from: data)
-        
-        return status
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode(CardRequestStatusResponse.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
     }
 
     func submitFeedback(
@@ -377,10 +285,7 @@ class NetworkService {
         message: String,
         affectedArea: String?
     ) async throws -> FeedbackResponse {
-        let urlString: String = "\(baseURL)/api/v1/feedback"
-    func getAssignments() async throws -> [Assignment] {
-        let urlString: String = "\(baseURL)/api/v1/assignments"
-
+        let urlString = "\(baseURL)/api/v1/feedback"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
@@ -388,14 +293,9 @@ class NetworkService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpMethod = "GET"
+        try attachAuthorization(to: &request)
 
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        let requestBody = FeedbackRequest(
+        let body = FeedbackRequest(
             feedbackType: feedbackType,
             rating: rating,
             title: title,
@@ -403,47 +303,11 @@ class NetworkService {
             affectedArea: affectedArea
         )
 
-        let jsonEncoder = JSONEncoder()
-        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
-        request.httpBody = try jsonEncoder.encode(requestBody)
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-
-        switch httpResponse.statusCode {
-        case 200:
-            break
-        case 401:
-            throw NetworkError.unauthorized
-        default:
-            throw NetworkError.serverError(httpResponse.statusCode)
-        }
-
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-
-        return try jsonDecoder.decode([Assignment].self, from: data)
-    }
-
-    func getAssignment(assignmentId: Int) async throws -> Assignment {
-        let urlString: String = "\(baseURL)/api/v1/assignments/\(assignmentId)"
-
-        guard let url = URL(string: urlString) else {
-            throw NetworkError.invalidURL
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try encoder.encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
@@ -451,28 +315,20 @@ class NetworkService {
         switch httpResponse.statusCode {
         case 201:
             break
-        case 400, 409:
-            if let errorMessage = String(data: data, encoding: .utf8) {
-                throw NetworkError.serverErrorMessage(errorMessage)
-            }
-            throw NetworkError.serverErrorMessage("Bad request")
         case 401:
             throw NetworkError.unauthorized
-        case 200:
-            break
-        case 401:
-            throw NetworkError.unauthorized
-        case 404:
-            throw NetworkError.serverErrorMessage("Assignment not found")
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
         }
 
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
 
-        let feedback = try jsonDecoder.decode(FeedbackResponse.self, from: data)
-        return feedback
+        do {
+            return try decoder.decode(FeedbackResponse.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
     }
 
     func trackTelemetryEvent(
@@ -481,13 +337,7 @@ class NetworkService {
         contextPayload: [String: String]?,
         screenName: String?
     ) async throws {
-        let urlString: String = "\(baseURL)/api/v1/telemetry/events"
-        return try jsonDecoder.decode(Assignment.self, from: data)
-    }
-
-    func submitAssignmentText(assignmentId: Int, submissionText: String) async throws -> Assignment {
-        let urlString: String = "\(baseURL)/api/v1/assignments/\(assignmentId)/submit"
-
+        let urlString = "\(baseURL)/api/v1/telemetry/events"
         guard let url = URL(string: urlString) else {
             throw NetworkError.invalidURL
         }
@@ -495,27 +345,21 @@ class NetworkService {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        try attachAuthorization(to: &request)
 
-        guard let token = AuthService.shared.getToken() else {
-            throw NetworkError.unauthorized
-        }
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        let requestBody = TelemetryEventRequest(
+        let body = TelemetryEventRequest(
             eventName: eventName,
             eventCategory: eventCategory,
             contextPayload: contextPayload,
             screenName: screenName,
             appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
         )
-        let requestBody = SubmitAssignmentRequest(submissionText: submissionText)
 
-        let jsonEncoder = JSONEncoder()
-        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
-        request.httpBody = try jsonEncoder.encode(requestBody)
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try encoder.encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
@@ -523,27 +367,176 @@ class NetworkService {
         switch httpResponse.statusCode {
         case 201:
             break
-        case 400, 409:
-            if let errorMessage = String(data: data, encoding: .utf8) {
-                throw NetworkError.serverErrorMessage(errorMessage)
-            }
-            throw NetworkError.serverErrorMessage("Bad request")
-        case 200:
-            break
-        case 400, 404, 409:
-            if let errorMessage = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines), !errorMessage.isEmpty {
-                throw NetworkError.serverErrorMessage(errorMessage)
-            }
-            throw NetworkError.serverErrorMessage("Could not submit assignment")
         case 401:
             throw NetworkError.unauthorized
         default:
-            throw NetworkError.serverError(httpResponse.statusCode)
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
+        }
+    }
+
+    func getAssignments() async throws -> [Assignment] {
+        let urlString = "\(baseURL)/api/v1/assignments"
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
         }
 
-        let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        try attachAuthorization(to: &request)
 
-        return try jsonDecoder.decode(Assignment.self, from: data)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode([Assignment].self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
+    }
+
+    func getAssignment(assignmentId: Int) async throws -> Assignment {
+        let urlString = "\(baseURL)/api/v1/assignments/\(assignmentId)"
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        try attachAuthorization(to: &request)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode(Assignment.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
+    }
+
+    func submitAssignmentText(assignmentId: Int, submissionText: String) async throws -> Assignment {
+        let urlString = "\(baseURL)/api/v1/assignments/\(assignmentId)/submit"
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        try attachAuthorization(to: &request)
+
+        let body = SubmitAssignmentRequest(submissionText: submissionText)
+
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try encoder.encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode(Assignment.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
+    }
+
+    private func fetchCodeResponse(path: String) async throws -> CodeResponse {
+        let urlString = "\(baseURL)\(path)"
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        try attachAuthorization(to: &request)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            break
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw errorForResponse(statusCode: httpResponse.statusCode, data: data)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        do {
+            return try decoder.decode(CodeResponse.self, from: data)
+        } catch {
+            throw NetworkError.decodingError
+        }
+    }
+
+    private func attachAuthorization(to request: inout URLRequest) throws {
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    private func errorForResponse(statusCode: Int, data: Data) -> NetworkError {
+        if let apiError = try? JSONDecoder().decode(APIErrorResponse.self, from: data),
+           !apiError.error.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .serverErrorMessage(apiError.error)
+        }
+
+        if let message = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !message.isEmpty {
+            return .serverErrorMessage(message)
+        }
+
+        return .serverError(statusCode)
     }
 }
