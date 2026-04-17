@@ -41,11 +41,15 @@ func routes(r *chi.Mux, db *sql.DB) {
 	r.Post("/api/v1/verify", qrHandler.VerifyCode)
 
 	cardRequestRepo := repository.NewCardRequestRepository(db)
+	feedbackRepo := repository.NewFeedbackRepository(db)
 
 	cardHandler := handler.NewCardHandler(cardRequestRepo, jwtSecret)
+	feedbackHandler := handler.NewFeedbackHandler(feedbackRepo, jwtSecret)
 	r.Post("/api/v1/card/requests", cardHandler.CreateCardRequest)
 	r.Get("/api/v1/card/requests", cardHandler.GetCardRequests)
 	r.Get("/api/v1/card/status", cardHandler.GetCardRequestStatus)
+	r.Post("/api/v1/feedback", feedbackHandler.CreateFeedback)
+	r.Post("/api/v1/telemetry/events", feedbackHandler.CreateTelemetryEvent)
 
 	assignmentRepo := repository.NewAssignmentRepository(db)
 	assignmentHandler := handler.NewAssignmentHandler(assignmentRepo, jwtSecret)
