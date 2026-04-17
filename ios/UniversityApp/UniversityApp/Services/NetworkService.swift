@@ -369,4 +369,119 @@ class NetworkService {
         
         return status
     }
+
+    func submitFeedback(
+        feedbackType: String,
+        rating: Int?,
+        title: String,
+        message: String,
+        affectedArea: String?
+    ) async throws -> FeedbackResponse {
+        let urlString: String = "\(baseURL)/api/v1/feedback"
+
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let requestBody = FeedbackRequest(
+            feedbackType: feedbackType,
+            rating: rating,
+            title: title,
+            message: message,
+            affectedArea: affectedArea
+        )
+
+        let jsonEncoder = JSONEncoder()
+        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try jsonEncoder.encode(requestBody)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 201:
+            break
+        case 400, 409:
+            if let errorMessage = String(data: data, encoding: .utf8) {
+                throw NetworkError.serverErrorMessage(errorMessage)
+            }
+            throw NetworkError.serverErrorMessage("Bad request")
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        let feedback = try jsonDecoder.decode(FeedbackResponse.self, from: data)
+        return feedback
+    }
+
+    func trackTelemetryEvent(
+        eventName: String,
+        eventCategory: String,
+        contextPayload: [String: String]?,
+        screenName: String?
+    ) async throws {
+        let urlString: String = "\(baseURL)/api/v1/telemetry/events"
+
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        guard let token = AuthService.shared.getToken() else {
+            throw NetworkError.unauthorized
+        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let requestBody = TelemetryEventRequest(
+            eventName: eventName,
+            eventCategory: eventCategory,
+            contextPayload: contextPayload,
+            screenName: screenName,
+            appVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+        )
+
+        let jsonEncoder = JSONEncoder()
+        jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
+        request.httpBody = try jsonEncoder.encode(requestBody)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 201:
+            break
+        case 400, 409:
+            if let errorMessage = String(data: data, encoding: .utf8) {
+                throw NetworkError.serverErrorMessage(errorMessage)
+            }
+            throw NetworkError.serverErrorMessage("Bad request")
+        case 401:
+            throw NetworkError.unauthorized
+        default:
+            throw NetworkError.serverError(httpResponse.statusCode)
+        }
+    }
 }

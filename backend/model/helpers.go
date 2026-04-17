@@ -19,3 +19,12 @@ func nullTimeToPtr(nt sql.NullTime) *string {
 	}
 	return nil
 }
+
+func nullInt32ToPtr(ni sql.NullInt32) *int {
+	if ni.Valid {
+		value := int(ni.Int32)
+		return &value
+	}
+
+	return nil
+}

@@ -13,6 +13,7 @@ struct ProfilePage: View {
     
     @State private var showLogoutAlert: Bool = false
     @State private var showCardManagement: Bool = false
+    @State private var showFeedback: Bool = false
     
     var body: some View {
         ScrollView {
@@ -62,6 +63,9 @@ struct ProfilePage: View {
         }
         .sheet(isPresented: $showCardManagement) {
             CardManagementPage()
+        }
+        .sheet(isPresented: $showFeedback) {
+            FeedbackPage()
         }
     }
 
@@ -178,6 +182,35 @@ struct ProfilePage: View {
                             .font(.headline)
 
                         Text("Request or replace your student card")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial)
+                .cornerRadius(20)
+            }
+            .foregroundStyle(.primary)
+            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 20))
+
+            Button {
+                showFeedback = true
+            } label: {
+                HStack {
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.title2)
+
+                    VStack(alignment: .leading) {
+                        Text("Send Feedback")
+                            .font(.headline)
+
+                        Text("Report bugs, usability issues, or feature ideas")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
