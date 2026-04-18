@@ -33,10 +33,48 @@ API runs on `http://localhost:3333`.
 ```bash
 make build
 make up
+make up-detached
 make down
 make down-volumes
 make logs
+make seed-reset
+make seed-verify
 ```
+
+## Demo Mock Data
+The backend now includes a seed migration:
+
+- `migrations/20260417190000_seed_demo_data.sql`
+
+Because migrations run automatically at startup, mock data is inserted on first run of a fresh database.
+
+### Reset and Re-seed Demo Data
+
+```bash
+make seed-reset
+```
+
+This removes the database volume and starts services again so all migrations (including seed data) are reapplied from scratch.
+
+### Verify Seeded Records
+
+```bash
+make seed-verify
+```
+
+### Demo Login Credentials
+All seeded users share password: `password123`
+
+Student accounts:
+- `S202401`
+- `S202402`
+- `S202403`
+- `S202404`
+- `S202405`
+
+Staff accounts:
+- Admin: `ST00001`
+- Staff: `ST00002`
 
 ## Configuration
 The service reads:

@@ -55,7 +55,20 @@ struct Student: Codable {
         guard let urlString = profilePhotoUrl else {
             return nil
         }
-        
-        return URL(string: urlString)
+
+        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+
+        if let candidate = URL(string: trimmed), candidate.scheme != nil {
+            return candidate
+        }
+
+        guard let baseURL = URL(string: AppConfig.baseURL) else {
+            return nil
+        }
+
+        return URL(string: trimmed, relativeTo: baseURL)?.absoluteURL
     }
 }
