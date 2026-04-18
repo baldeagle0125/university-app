@@ -3,6 +3,9 @@ package server
 import (
 	"database/sql"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"university-app/config"
 	"university-app/handler"
 	"university-app/repository"
@@ -19,6 +22,10 @@ func routes(r *chi.Mux, db *sql.DB) {
 
 	fileServer := http.FileServer(http.Dir("app/static/profile-photos"))
 	r.Handle("/static/profile-photos/*", http.StripPrefix("/static/profile-photos/", fileServer))
+	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/", http.StatusPermanentRedirect)
+	})
+	r.HandleFunc("/admin/*", adminPortalHandler("app/static/admin"))
 
 	studentRepo := repository.NewStudentRepository(db)
 	staffRepo := repository.NewStaffRepository(db)
@@ -33,6 +40,7 @@ func routes(r *chi.Mux, db *sql.DB) {
 	r.Get("/api/v1/student-info", studentHandler.GetStudentByStudentNumber)
 
 	authHandler := handler.NewAuthHandler(studentRepo, staffRepo, jwtSecret)
+	staffHandler := handler.NewStaffHandler(staffRepo, jwtSecret)
 	r.Post("/api/v1/login", authHandler.Login)
 	r.Post("/api/v1/staff/login", authHandler.StaffLogin)
 
@@ -61,4 +69,33 @@ func routes(r *chi.Mux, db *sql.DB) {
 
 	r.Get("/api/v1/admin/card-requests", cardHandler.GetPendingCardRequests)
 	r.Post("/api/v1/admin/card-requests/{id}/process", cardHandler.ProcessCardRequest)
+	r.Get("/api/v1/admin/assignments", assignmentHandler.ListAssignmentsForAdmin)
+	r.Get("/api/v1/admin/feedback", feedbackHandler.ListFeedbackEntries)
+	r.Get("/api/v1/admin/telemetry/events", feedbackHandler.ListTelemetryEvents)
+	r.Get("/api/v1/admin/staff", staffHandler.ListStaff)
+	r.Post("/api/v1/admin/staff", staffHandler.CreateStaff)
+	r.Patch("/api/v1/admin/staff/{id}", staffHandler.UpdateStaff)
+}
+
+func adminPortalHandler(adminRoot string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		relativePath := strings.TrimPrefix(r.URL.Path, "/admin/")
+		if relativePath == "" {
+			http.ServeFile(w, r, filepath.Join(adminRoot, "index.html"))
+			return
+		}
+
+		if strings.Contains(relativePath, "..") {
+			http.ServeFile(w, r, filepath.Join(adminRoot, "index.html"))
+			return
+		}
+
+		filePath := filepath.Join(adminRoot, filepath.Clean(relativePath))
+		if info, err := os.Stat(filePath); err == nil && !info.IsDir() {
+			http.ServeFile(w, r, filePath)
+			return
+		}
+
+		http.ServeFile(w, r, filepath.Join(adminRoot, "index.html"))
+	}
 }

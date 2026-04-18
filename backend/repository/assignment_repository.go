@@ -137,3 +137,53 @@ func (r *AssignmentRepository) SeedDefaultAssignmentsForStudent(ctx context.Cont
 
 	return err
 }
+
+func (r *AssignmentRepository) ListAssignmentsForAdmin(ctx context.Context, status, studentNumber, titleContains string, limit, offset int) ([]model.Assignment, error) {
+	query := `
+		SELECT id, student_number, title, description, due_date, status, submission_text, submitted_at, created_at, updated_at
+		FROM assignments
+		WHERE (
+			$1 = ''
+			OR ($1 = 'overdue' AND status = 'assigned' AND due_date < NOW())
+			OR ($1 IN ('assigned', 'submitted') AND status = $1)
+		)
+			AND ($2 = '' OR student_number = $2)
+			AND ($3 = '' OR title ILIKE '%' || $3 || '%')
+		ORDER BY due_date ASC, created_at DESC
+		LIMIT $4 OFFSET $5
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, status, studentNumber, titleContains, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	assignments := make([]model.Assignment, 0)
+	for rows.Next() {
+		var assignment model.Assignment
+		err = rows.Scan(
+			&assignment.ID,
+			&assignment.StudentNumber,
+			&assignment.Title,
+			&assignment.Description,
+			&assignment.DueDate,
+			&assignment.Status,
+			&assignment.SubmissionText,
+			&assignment.SubmittedAt,
+			&assignment.CreatedAt,
+			&assignment.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		assignments = append(assignments, assignment)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return assignments, nil
+}

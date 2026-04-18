@@ -142,3 +142,45 @@ func (h *AssignmentHandler) SubmitAssignment(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updatedAssignment.ToResponse(time.Now().UTC()))
 }
+
+func (h *AssignmentHandler) ListAssignmentsForAdmin(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
+	status := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("status")))
+	if status != "" && status != "assigned" && status != "submitted" && status != "overdue" {
+		writeError(w, http.StatusBadRequest, "status must be one of: assigned, submitted, overdue")
+		return
+	}
+
+	studentNumber := strings.TrimSpace(r.URL.Query().Get("student_number"))
+	titleContains := strings.TrimSpace(r.URL.Query().Get("title"))
+
+	limit, offset, err := parseListPagination(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	assignments, err := h.repo.ListAssignmentsForAdmin(r.Context(), status, studentNumber, titleContains, limit, offset)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch assignments")
+		return
+	}
+
+	now := time.Now().UTC()
+	responses := make([]model.AssignmentResponse, len(assignments))
+	for i, assignment := range assignments {
+		responses[i] = assignment.ToResponse(now)
+	}
+
+	writeJSON(w, http.StatusOK, responses)
+}

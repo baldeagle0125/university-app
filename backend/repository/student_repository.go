@@ -17,14 +17,24 @@ func NewStudentRepository(db *sql.DB) *StudentRepository {
 	}
 }
 
-func (r *StudentRepository) GetAll(ctx context.Context) ([]model.Student, error) {
+func (r *StudentRepository) GetAll(ctx context.Context, search, cardStatus, programCode string, limit, offset int) ([]model.Student, error) {
 	query := `
 		SELECT id, student_number, first_name, last_name, email, password_hash, program_code, course_title, date_of_birth, su_position, card_issued_date, card_expiry_date, profile_photo_url, card_status, created_at, updated_at
 		FROM students
+		WHERE (
+			$1 = ''
+			OR student_number ILIKE '%' || $1 || '%'
+			OR email ILIKE '%' || $1 || '%'
+			OR first_name ILIKE '%' || $1 || '%'
+			OR last_name ILIKE '%' || $1 || '%'
+		)
+			AND ($2 = '' OR card_status = $2)
+			AND ($3 = '' OR program_code = $3)
 		ORDER BY last_name, first_name
+		LIMIT $4 OFFSET $5
 	`
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, search, cardStatus, programCode, limit, offset)
 	if err != nil {
 		return nil, err
 	}

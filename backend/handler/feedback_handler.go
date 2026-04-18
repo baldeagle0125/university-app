@@ -87,6 +87,77 @@ func (h *FeedbackHandler) CreateTelemetryEvent(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(response)
 }
 
+func (h *FeedbackHandler) ListFeedbackEntries(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
+	feedbackType := strings.TrimSpace(r.URL.Query().Get("feedback_type"))
+	studentNumber := strings.TrimSpace(r.URL.Query().Get("student_number"))
+
+	limit, offset, err := parseListPagination(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	entries, err := h.repo.ListFeedbackEntries(r.Context(), feedbackType, studentNumber, limit, offset)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch feedback entries")
+		return
+	}
+
+	responses := make([]model.FeedbackResponse, len(entries))
+	for i, entry := range entries {
+		responses[i] = entry.ToResponse()
+	}
+
+	writeJSON(w, http.StatusOK, responses)
+}
+
+func (h *FeedbackHandler) ListTelemetryEvents(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
+	eventName := strings.TrimSpace(r.URL.Query().Get("event_name"))
+	eventCategory := strings.TrimSpace(r.URL.Query().Get("event_category"))
+	studentNumber := strings.TrimSpace(r.URL.Query().Get("student_number"))
+
+	limit, offset, err := parseListPagination(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	events, err := h.repo.ListTelemetryEvents(r.Context(), eventName, eventCategory, studentNumber, limit, offset)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Failed to fetch telemetry events")
+		return
+	}
+
+	responses := make([]model.TelemetryEventResponse, len(events))
+	for i, event := range events {
+		responses[i] = event.ToResponse()
+	}
+
+	writeJSON(w, http.StatusOK, responses)
+}
+
 func validateFeedbackInput(input model.CreateFeedbackInput) error {
 	feedbackType := strings.TrimSpace(input.FeedbackType)
 	if feedbackType != "bug" && feedbackType != "usability" && feedbackType != "feature" {
