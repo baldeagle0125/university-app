@@ -15,6 +15,12 @@ Main capabilities:
 - macOS with Xcode installed
 - Running backend API at `http://localhost:3333` (or update app config)
 
+For Minikube testing from your Mac host, expose backend locally:
+
+```bash
+kubectl -n university-app port-forward svc/backend 3334:3333
+```
+
 ## Open and Run
 
 ```bash
@@ -33,7 +39,7 @@ Base URL is defined in:
 Default value:
 
 ```swift
-static let baseURL = "http://localhost:3333"
+static let baseURL = "http://localhost:3334"
 ```
 
 If testing on a physical device, replace `localhost` with your machine's local network IP.
