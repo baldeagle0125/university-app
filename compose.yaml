@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    environment:
+      - POSTGRES_DB=university_app_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db-data:/var/lib/postgresql
+    secrets:
+      - db-password
+
+  backend:
+    build:
+      context: ./backend
+      target: final
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=university_app_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    ports:
+      - "3333:3333"
+    volumes:
+      - ./backend/static:/app/static
+    secrets:
+      - db-password
+      - jwt-secret-key
+      - qr-secret-key
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      target: final
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  db-data:
+
+secrets:
+  db-password:
+    file: ./backend/secrets/db_password.txt
+  jwt-secret-key:
+    file: ./backend/secrets/jwt_secret_key.txt
+  qr-secret-key:
+    file: ./backend/secrets/qr_secret_key.txt
