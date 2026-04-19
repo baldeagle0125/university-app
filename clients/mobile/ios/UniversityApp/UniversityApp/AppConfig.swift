@@ -8,5 +8,5 @@
 import Foundation
 
 struct AppConfig {
-    static let baseURL = "http://localhost:3333"
+    static let baseURL = "http://localhost:3334"
 }
