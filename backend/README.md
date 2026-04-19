@@ -18,6 +18,17 @@ Responsibilities:
 - Migrations: `pressly/goose`
 - Auth: `golang-jwt/jwt/v5`, `bcrypt`
 
+## Updating Dependencies
+
+From `backend/` you can refresh Go dependencies with:
+
+```bash
+go get -u ./...
+go mod tidy
+```
+
+After that, commit the updated `go.mod` and `go.sum` files together.
+
 ## Running the Backend
 
 For frontend + backend + db, run from repository root:
@@ -124,6 +135,8 @@ Base path: `/api/v1`
 - `POST /staff/login`
 	- Body: `{ "staff_number": "...", "password": "..." }`
 	- Response: `{ "token": "..." }`
+
+JWTs issued by the backend are currently valid for 7 days.
 
 ### Student
 - `POST /students`
