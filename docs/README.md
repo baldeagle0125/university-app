@@ -24,6 +24,8 @@ This folder contains supporting technical documentation for the University App p
 - Security and deployment assumptions
 
 ## Related Module Docs
-- Backend: `../backend/README.md`
-- iOS app: `../ios/README.md`
-- Web module: `../web/README.md`
+- Server workspace: `../server/README.md`
+- Backend service: `../server/backend/README.md`
+- Admin frontend: `../server/frontend/README.md`
+- iOS app: `../clients/mobile/ios/README.md`
+- Web module: `../clients/web/README.md`

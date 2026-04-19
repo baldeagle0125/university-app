@@ -3,24 +3,24 @@ My final-year project at the South East Technological University.
 
 ## Overview
 University App is a student-focused platform with:
-- A Go backend API for authentication, student profile data, card requests, assignments, QR/barcode verification, and feedback telemetry.
-- A React admin panel frontend.
-- An iOS SwiftUI client for student usage.
+- A Dockerized server workspace with a Go backend API, React admin portal, PostgreSQL, and local development orchestration.
+- A SwiftUI iOS client for student usage.
+- Placeholder Android and web client folders for future expansion.
 - A static showcase website.
 
 ## Project Structure
-- [backend](backend/README.md): Go API service and PostgreSQL integration.
-- [frontend](frontend/README.md): Dockerized admin panel (React + Vite).
-- [ios](ios/README.md): Native iOS app (SwiftUI).
-- [android](android/README.md): Future Android client.
-- [web](web/README.md): Future web client.
+- [server](server/README.md): Backend, admin frontend, compose stack, and local run instructions.
+- [clients/mobile/ios](clients/mobile/ios/README.md): Native iOS app (SwiftUI).
+- [clients/mobile/android](clients/mobile/android/README.md): Future Android client.
+- [clients/web](clients/web/README.md): Future web client.
 - [showcase-web](showcase-web/README.md): Static one-page project showcase website.
 - [docs](docs/README.md): Architecture and technical documentation index.
 
 ## Quick Start
-1. Start frontend + backend + db from repository root:
+1. Start frontend + backend + db from the server workspace:
 
 ```bash
+cd server
 make up
 ```
 
@@ -32,7 +32,7 @@ make up
 3. Run iOS app:
 
 ```bash
-open ios/UniversityApp/UniversityApp.xcodeproj
+open clients/mobile/ios/UniversityApp/UniversityApp.xcodeproj
 ```
 
 4. Open showcase website:
@@ -50,10 +50,11 @@ open showcase-web/index.html
 - Feedback and telemetry collection (`/api/v1/feedback`, `/api/v1/telemetry/events`)
 
 ## Read More
-- [Backend Application](backend/README.md)
-- [Frontend Admin Panel](frontend/README.md)
-- [iOS Application](ios/README.md)
-- [Android Application](android/README.md)
-- [Web Client](web/README.md)
+- [Server Workspace](server/README.md)
+- [Backend Application](server/backend/README.md)
+- [Frontend Admin Panel](server/frontend/README.md)
+- [iOS Application](clients/mobile/ios/README.md)
+- [Android Application](clients/mobile/android/README.md)
+- [Web Client](clients/web/README.md)
 - [Showcase Website](showcase-web/README.md)
 - [Project Documentation](docs/README.md)

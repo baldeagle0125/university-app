@@ -18,7 +18,7 @@ Main capabilities:
 ## Open and Run
 
 ```bash
-open ios/UniversityApp/UniversityApp.xcodeproj
+open clients/mobile/ios/UniversityApp/UniversityApp.xcodeproj
 ```
 
 In Xcode:
@@ -28,7 +28,7 @@ In Xcode:
 
 ## Backend Configuration
 Base URL is defined in:
-- `ios/UniversityApp/UniversityApp/AppConfig.swift`
+- `clients/mobile/ios/UniversityApp/UniversityApp/AppConfig.swift`
 
 Default value:
 

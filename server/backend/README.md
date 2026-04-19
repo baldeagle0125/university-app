@@ -20,7 +20,7 @@ Responsibilities:
 
 ## Updating Dependencies
 
-From `backend/` you can refresh Go dependencies with:
+From this directory you can refresh Go dependencies with:
 
 ```bash
 go get -u ./...
@@ -31,7 +31,7 @@ After that, commit the updated `go.mod` and `go.sum` files together.
 
 ## Running the Backend
 
-For frontend + backend + db, run from repository root:
+For frontend + backend + db, run from the server directory:
 
 ```bash
 make up
@@ -43,7 +43,7 @@ API runs on `http://localhost:3333`.
 
 ### Useful Make Targets
 
-Run these from repository root:
+Run these from the server directory:
 
 ```bash
 make build
@@ -59,7 +59,7 @@ make seed-verify
 ## Demo Mock Data
 The backend now includes a seed migration:
 
-- `migrations/20260417190000_seed_demo_data.sql`
+- `migrations/20260417195327_seed_demo_data.sql`
 
 Because migrations run automatically at startup, mock data is inserted on first run of a fresh database.
 
@@ -110,7 +110,7 @@ Local source secret files:
 - `secrets/jwt_secret_key.txt`
 - `secrets/qr_secret_key.txt`
 
-Example templates are available under `backend/secrets/*.example`.
+Example templates are available under `./secrets/*.example`.
 
 ## Database and Migrations
 Migrations run automatically on service startup (`config.RunMigrations`).
@@ -214,7 +214,7 @@ Note: Frontend is served by the `frontend` container via Nginx and proxies `/api
 
 ## Admin Portal Frontend
 
-The admin frontend source lives at `../frontend` and is built/served by Docker in the root compose stack.
+The admin frontend source lives at `../frontend` and is built/served by Docker in the server compose stack.
 
 ## Error Behavior
 Error responses in newly updated handlers (`student`, `card`) follow JSON:

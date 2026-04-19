@@ -1,8 +1,8 @@
 .DS_Store
 *.xcuserstate
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-backend/secrets/db_password.txt
-backend/secrets/jwt_secret_key.txt
-backend/secrets/qr_secret_key.txt
+server/frontend/node_modules/
+server/frontend/dist/
+server/frontend/.vite/
+server/backend/secrets/db_password.txt
+server/backend/secrets/jwt_secret_key.txt
+server/backend/secrets/qr_secret_key.txt

@@ -2,9 +2,9 @@
 
 React + Vite frontend for the University App Admin Portal.
 
-This service is Dockerized and intended to boot alongside backend and db from the repository root compose stack.
+This service is Dockerized and intended to boot alongside backend and db from the server compose stack.
 
-`frontend/src/App.jsx` is the composition root for the admin UI. Reusable pieces live in `frontend/src/components/` so the main app stays readable while still keeping one place for page-level state and API orchestration.
+`src/App.jsx` is the composition root for the admin UI. Reusable pieces live in `src/components/` so the main app stays readable while still keeping one place for page-level state and API orchestration.
 
 ## Features in current scaffold
 
@@ -30,7 +30,7 @@ For local Vite dev mode, backend should be running separately.
 
 ## Updating Dependencies
 
-From `frontend/`:
+From this directory:
 
 ```bash
 npm update
@@ -41,7 +41,7 @@ If you add or remove packages explicitly, run `npm install` so `package-lock.jso
 
 ## Docker (Recommended)
 
-Run full stack from repository root:
+Run full stack from the server directory:
 
 ```bash
 docker compose up --build
