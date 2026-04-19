@@ -25,6 +25,5 @@ This folder contains supporting technical documentation for the University App p
 
 ## Related Module Docs
 - Backend: `../backend/README.md`
-- Backend Docker setup: `../backend/README.Docker.md`
 - iOS app: `../ios/README.md`
 - Web module: `../web/README.md`
