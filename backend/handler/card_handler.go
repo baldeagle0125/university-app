@@ -2,10 +2,8 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 	"university-app/jwt"
 	"university-app/model"
 	"university-app/repository"
@@ -122,7 +120,7 @@ func (h *CardHandler) GetCardRequestStatus(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *CardHandler) GetPendingCardRequests(w http.ResponseWriter, r *http.Request) {
-	_, statusCode, err := h.requireAdminStaffNumber(r)
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
 	if err != nil {
 		if statusCode == http.StatusUnauthorized {
 			writeError(w, http.StatusUnauthorized, "Unauthorized")
@@ -148,7 +146,7 @@ func (h *CardHandler) GetPendingCardRequests(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *CardHandler) ProcessCardRequest(w http.ResponseWriter, r *http.Request) {
-	adminNumber, statusCode, err := h.requireAdminStaffNumber(r)
+	adminNumber, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
 	if err != nil {
 		if statusCode == http.StatusUnauthorized {
 			writeError(w, http.StatusUnauthorized, "Unauthorized")
@@ -209,17 +207,4 @@ func (h *CardHandler) ProcessCardRequest(w http.ResponseWriter, r *http.Request)
 
 	response := updateRequest.ToResponse()
 	writeJSON(w, http.StatusOK, response)
-}
-
-func (h *CardHandler) requireAdminStaffNumber(r *http.Request) (string, int, error) {
-	staffNumber, role, err := jwt.ExtractStaffFromRequest(r, h.jwtSecret)
-	if err != nil {
-		return "", http.StatusUnauthorized, err
-	}
-
-	if strings.ToLower(role) != "admin" {
-		return "", http.StatusForbidden, errors.New("staff role is not admin")
-	}
-
-	return staffNumber, http.StatusOK, nil
 }

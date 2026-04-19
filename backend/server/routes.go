@@ -33,6 +33,7 @@ func routes(r *chi.Mux, db *sql.DB) {
 	r.Get("/api/v1/student-info", studentHandler.GetStudentByStudentNumber)
 
 	authHandler := handler.NewAuthHandler(studentRepo, staffRepo, jwtSecret)
+	staffHandler := handler.NewStaffHandler(staffRepo, jwtSecret)
 	r.Post("/api/v1/login", authHandler.Login)
 	r.Post("/api/v1/staff/login", authHandler.StaffLogin)
 
@@ -61,4 +62,10 @@ func routes(r *chi.Mux, db *sql.DB) {
 
 	r.Get("/api/v1/admin/card-requests", cardHandler.GetPendingCardRequests)
 	r.Post("/api/v1/admin/card-requests/{id}/process", cardHandler.ProcessCardRequest)
+	r.Get("/api/v1/admin/assignments", assignmentHandler.ListAssignmentsForAdmin)
+	r.Get("/api/v1/admin/feedback", feedbackHandler.ListFeedbackEntries)
+	r.Get("/api/v1/admin/telemetry/events", feedbackHandler.ListTelemetryEvents)
+	r.Get("/api/v1/admin/staff", staffHandler.ListStaff)
+	r.Post("/api/v1/admin/staff", staffHandler.CreateStaff)
+	r.Patch("/api/v1/admin/staff/{id}", staffHandler.UpdateStaff)
 }

@@ -28,7 +28,33 @@ func NewStudentHandler(repo *repository.StudentRepository, jwtSecret string) *St
 }
 
 func (h *StudentHandler) ListStudents(w http.ResponseWriter, r *http.Request) {
-	students, err := h.repo.GetAll(r.Context())
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
+	search := strings.TrimSpace(r.URL.Query().Get("search"))
+	cardStatus := strings.TrimSpace(r.URL.Query().Get("card_status"))
+	programCode := strings.TrimSpace(r.URL.Query().Get("program_code"))
+
+	if cardStatus != "" && !isValidCardStatus(cardStatus) {
+		writeError(w, http.StatusBadRequest, "card_status must be one of: active, expired, lost, requested, none")
+		return
+	}
+
+	limit, offset, err := parseListPagination(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	students, err := h.repo.GetAll(r.Context(), search, cardStatus, programCode, limit, offset)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "Failed to fetch students")
 		return
@@ -43,11 +69,22 @@ func (h *StudentHandler) ListStudents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
 	var input model.CreateStudentInput
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
-	if err := decoder.Decode(&input); err != nil {
+	if err = decoder.Decode(&input); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -73,6 +110,17 @@ func (h *StudentHandler) CreateStudent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *StudentHandler) GetStudentByID(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
 	id, err := parseStudentID(r)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid student ID")
@@ -94,6 +142,17 @@ func (h *StudentHandler) GetStudentByID(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
 	id, err := parseStudentID(r)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid student ID")
@@ -146,6 +205,17 @@ func (h *StudentHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *StudentHandler) PartialUpdateStudent(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
 	id, err := parseStudentID(r)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid student ID")
@@ -203,6 +273,17 @@ func (h *StudentHandler) PartialUpdateStudent(w http.ResponseWriter, r *http.Req
 }
 
 func (h *StudentHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
+	_, statusCode, err := requireAdminStaffNumber(r, h.jwtSecret)
+	if err != nil {
+		if statusCode == http.StatusUnauthorized {
+			writeError(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+
+		writeError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
+
 	id, err := parseStudentID(r)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid student ID")
@@ -557,9 +638,4 @@ func isValidCardStatus(cardStatus string) bool {
 
 	_, ok := allowedCardStatuses[cardStatus]
 	return ok
-}
-
-func isUniqueViolation(err error) bool {
-	errMessage := strings.ToLower(err.Error())
-	return strings.Contains(errMessage, "duplicate key") || strings.Contains(errMessage, "unique constraint")
 }

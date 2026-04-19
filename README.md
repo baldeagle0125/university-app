@@ -4,24 +4,30 @@ My final-year project at the South East Technological University.
 ## Overview
 University App is a student-focused platform with:
 - A Go backend API for authentication, student profile data, card requests, assignments, QR/barcode verification, and feedback telemetry.
+- A React admin panel frontend.
 - An iOS SwiftUI client for student usage.
-- A static web page for project showcase.
+- A static showcase website.
 
 ## Project Structure
-- [backend](backend/README.md): Go API service, PostgreSQL integration, migrations, and Docker Compose setup.
+- [backend](backend/README.md): Go API service and PostgreSQL integration.
+- [frontend](frontend/README.md): Dockerized admin panel (React + Vite).
 - [ios](ios/README.md): Native iOS app (SwiftUI).
-- [web](web/README.md): Static one-page project website.
+- [android](android/README.md): Future Android client.
+- [web](web/README.md): Future web client.
+- [showcase-web](showcase-web/README.md): Static one-page project showcase website.
 - [docs](docs/README.md): Architecture and technical documentation index.
 
 ## Quick Start
-1. Start backend services:
+1. Start frontend + backend + db from repository root:
 
 ```bash
-cd backend
 make up
 ```
 
-2. Backend API becomes available on `http://localhost:3333`.
+2. Services:
+- Frontend (admin panel): `http://localhost:8080`
+- Backend API: `http://localhost:3333`
+- Database: `localhost:5432`
 
 3. Run iOS app:
 
@@ -29,10 +35,10 @@ make up
 open ios/UniversityApp/UniversityApp.xcodeproj
 ```
 
-4. Open web demo page:
+4. Open showcase website:
 
 ```bash
-open web/index.html
+open showcase-web/index.html
 ```
 
 ## Core Features
@@ -45,7 +51,9 @@ open web/index.html
 
 ## Read More
 - [Backend Application](backend/README.md)
-- [Backend Docker Guide](backend/README.Docker.md)
+- [Frontend Admin Panel](frontend/README.md)
 - [iOS Application](ios/README.md)
-- [Web Application](web/README.md)
+- [Android Application](android/README.md)
+- [Web Client](web/README.md)
+- [Showcase Website](showcase-web/README.md)
 - [Project Documentation](docs/README.md)
