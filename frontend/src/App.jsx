@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createStaff,
   createStudent,
@@ -16,6 +16,7 @@ import {
   setToken,
   updateStaff,
 } from "./api";
+import { LoginForm } from "./components/LoginForm";
 
 const VIEWS = [
   { key: "dashboard", label: "Dashboard" },
@@ -27,47 +28,33 @@ const VIEWS = [
   { key: "staff", label: "Staff" },
 ];
 
-function LoginForm({ onLogin, loading, error }) {
-  const [staffNumber, setStaffNumber] = useState("");
-  const [password, setPassword] = useState("");
+function extractStaffClaims(token) {
+  if (!token || !token.includes(".")) {
+    return null;
+  }
 
-  return (
-    <section className="login-panel">
-      <h1>University Admin Portal</h1>
-      <p>Sign in with an admin staff account.</p>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          onLogin(staffNumber, password);
-        }}
-      >
-        <label>
-          Staff Number
-          <input value={staffNumber} onChange={(e) => setStaffNumber(e.target.value)} required />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
-        </button>
-      </form>
-      {error ? <p className="error">{error}</p> : null}
-    </section>
-  );
+  try {
+    const payload = token.split(".")[1];
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = atob(normalizedPayload);
+    const claims = JSON.parse(decoded);
+
+    return {
+      staffNumber: claims.staff_number || "",
+      role: claims.role || "",
+    };
+  } catch {
+    return null;
+  }
 }
 
 export default function App() {
   const [activeView, setActiveView] = useState("dashboard");
   const [token, setTokenState] = useState(getToken());
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const [studentFilters, setStudentFilters] = useState({
     search: "",
     cardStatus: "",
@@ -113,6 +100,31 @@ export default function App() {
 
   const signedIn = useMemo(() => Boolean(token), [token]);
 
+  const currentStaffClaims = useMemo(() => extractStaffClaims(token), [token]);
+
+  const signedInLabel = useMemo(() => {
+    const staffNumber = currentStaffClaims?.staffNumber || "";
+    const role = currentStaffClaims?.role || "";
+
+    if (!staffNumber) {
+      return "Signed in";
+    }
+
+    const currentStaff = data.staff.find((staffMember) => staffMember.staff_number === staffNumber);
+    if (currentStaff) {
+      return `Signed in: ${currentStaff.first_name} ${currentStaff.last_name} (${staffNumber})`;
+    }
+
+    return role ? `Signed in: ${staffNumber} (${role})` : `Signed in: ${staffNumber}`;
+  }, [currentStaffClaims, data.staff]);
+
+  const lastSyncedLabel = lastSyncedAt
+    ? lastSyncedAt.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "not synced yet";
+
   async function handleLogin(staffNumber, password) {
     setLoading(true);
     setError("");
@@ -129,8 +141,15 @@ export default function App() {
     }
   }
 
-  async function refreshAll() {
-    setLoading(true);
+  async function refreshAll(options = {}) {
+    const { silent = false } = options;
+
+    if (silent) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
     setError("");
 
     try {
@@ -144,12 +163,64 @@ export default function App() {
       ]);
 
       setData({ cardRequests, students, assignments, feedback, telemetry, staff });
+      setLastSyncedAt(new Date());
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (silent) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   }
+
+  useEffect(() => {
+    if (!signedIn) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const syncNow = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      await refreshAll({ silent: true });
+    };
+
+    syncNow();
+
+    const intervalId = window.setInterval(syncNow, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [signedIn]);
+
+  useEffect(() => {
+    const syncViewFromHash = () => {
+      const hashView = window.location.hash.replace("#", "");
+      if (VIEWS.some((view) => view.key === hashView)) {
+        setActiveView(hashView);
+      }
+    };
+
+    syncViewFromHash();
+    window.addEventListener("hashchange", syncViewFromHash);
+
+    return () => {
+      window.removeEventListener("hashchange", syncViewFromHash);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (signedIn && window.location.hash !== `#${activeView}`) {
+      window.history.replaceState(null, "", `#${activeView}`);
+    }
+  }, [activeView, signedIn]);
 
   async function handleProcessCard(id, status) {
     setLoading(true);
@@ -368,12 +439,15 @@ export default function App() {
   }
 
   return (
-    <main className="page">
+    <main className="page" aria-busy={loading || refreshing}>
       <header className="topbar">
         <h1>Admin Portal</h1>
         <div className="actions">
-          <button type="button" onClick={refreshAll} disabled={loading}>
-            {loading ? "Refreshing..." : "Refresh"}
+          <span className="topbar-user" aria-live="polite">
+            {signedInLabel}
+          </span>
+          <button type="button" onClick={() => refreshAll()} disabled={loading || refreshing}>
+            {loading || refreshing ? "Refreshing..." : "Refresh now"}
           </button>
           <button
             type="button"
@@ -402,6 +476,10 @@ export default function App() {
 
       {error ? <p className="error">{error}</p> : null}
 
+      <p className="sync-line">
+        Auto-refresh is on. Last successful sync: <strong>{lastSyncedLabel}</strong>
+      </p>
+
       {activeView === "dashboard" ? (
         <section className="grid">
           <article className="panel stat">
@@ -423,25 +501,42 @@ export default function App() {
         </section>
       ) : null}
 
+      {activeView === "dashboard" &&
+      !data.cardRequests.length &&
+      !data.students.length &&
+      !data.assignments.length &&
+      !data.feedback.length &&
+      !data.telemetry.length &&
+      !data.staff.length ? (
+        <section className="panel empty-state">
+          <h2>No live data yet</h2>
+          <p>The portal is connected, but there is no seeded or filtered data to display yet.</p>
+        </section>
+      ) : null}
+
       {activeView === "card-requests" ? (
         <section className="panel">
           <h2>Card Requests</h2>
-          {data.cardRequests.map((request) => (
-            <article className="card" key={request.id}>
-              <p>
-                <strong>{request.student_number}</strong> requested <strong>{request.request_type}</strong>
-              </p>
-              <p>{request.request_reason || "No reason"}</p>
-              <div className="actions">
-                <button type="button" onClick={() => handleProcessCard(request.id, "approved")}>
-                  Approve
-                </button>
-                <button type="button" onClick={() => handleProcessCard(request.id, "rejected")}>
-                  Reject
-                </button>
-              </div>
-            </article>
-          ))}
+          {data.cardRequests.length ? (
+            data.cardRequests.map((request) => (
+              <article className="card" key={request.id}>
+                <p>
+                  <strong>{request.student_number}</strong> requested <strong>{request.request_type}</strong>
+                </p>
+                <p>{request.request_reason || "No reason"}</p>
+                <div className="actions">
+                  <button type="button" onClick={() => handleProcessCard(request.id, "approved") }>
+                    Approve
+                  </button>
+                  <button type="button" onClick={() => handleProcessCard(request.id, "rejected") }>
+                    Reject
+                  </button>
+                </div>
+              </article>
+            ))
+          ) : (
+            <p className="empty-state">No card requests to review.</p>
+          )}
         </section>
       ) : null}
 
@@ -565,23 +660,27 @@ export default function App() {
             </div>
           </form>
           <div className="stack">
-            {data.students.map((student) => (
-              <article className="card" key={student.id}>
-                <p>
-                  <strong>
-                    {student.first_name} {student.last_name}
-                  </strong>{" "}
-                  ({student.student_number})
-                </p>
-                <p>{student.email}</p>
-                <p>Card: {student.card_status}</p>
-                <div className="actions">
-                  <button type="button" onClick={() => handleDeleteStudent(student.id)}>
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))}
+            {data.students.length ? (
+              data.students.map((student) => (
+                <article className="card" key={student.id}>
+                  <p>
+                    <strong>
+                      {student.first_name} {student.last_name}
+                    </strong>{" "}
+                    ({student.student_number})
+                  </p>
+                  <p>{student.email}</p>
+                  <p>Card: {student.card_status}</p>
+                  <div className="actions">
+                    <button type="button" onClick={() => handleDeleteStudent(student.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="empty-state">No students match the current filters.</p>
+            )}
           </div>
         </section>
       ) : null}
@@ -647,15 +746,23 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
-                {data.assignments.map((assignment) => (
-                  <tr key={assignment.id}>
-                    <td>{assignment.student_number}</td>
-                    <td>{assignment.title}</td>
-                    <td>{assignment.status}</td>
-                    <td>{assignment.due_date ? new Date(assignment.due_date).toLocaleString() : "-"}</td>
-                    <td>{assignment.submitted_at ? new Date(assignment.submitted_at).toLocaleString() : "-"}</td>
+                {data.assignments.length ? (
+                  data.assignments.map((assignment) => (
+                    <tr key={assignment.id}>
+                      <td>{assignment.student_number}</td>
+                      <td>{assignment.title}</td>
+                      <td>{assignment.status}</td>
+                      <td>{assignment.due_date ? new Date(assignment.due_date).toLocaleString() : "-"}</td>
+                      <td>{assignment.submitted_at ? new Date(assignment.submitted_at).toLocaleString() : "-"}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="empty-table-cell">
+                      No assignments found.
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -713,15 +820,23 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
-                {data.feedback.map((entry) => (
-                  <tr key={entry.id}>
-                    <td>{entry.student_number}</td>
-                    <td>{entry.feedback_type}</td>
-                    <td>{entry.title}</td>
-                    <td>{entry.rating ?? "-"}</td>
-                    <td>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "-"}</td>
+                {data.feedback.length ? (
+                  data.feedback.map((entry) => (
+                    <tr key={entry.id}>
+                      <td>{entry.student_number}</td>
+                      <td>{entry.feedback_type}</td>
+                      <td>{entry.title}</td>
+                      <td>{entry.rating ?? "-"}</td>
+                      <td>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "-"}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="empty-table-cell">
+                      No feedback entries found.
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -785,15 +900,23 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
-                {data.telemetry.map((event) => (
-                  <tr key={event.id}>
-                    <td>{event.student_number}</td>
-                    <td>{event.event_name}</td>
-                    <td>{event.event_category}</td>
-                    <td>{event.screen_name || "-"}</td>
-                    <td>{event.created_at ? new Date(event.created_at).toLocaleString() : "-"}</td>
+                {data.telemetry.length ? (
+                  data.telemetry.map((event) => (
+                    <tr key={event.id}>
+                      <td>{event.student_number}</td>
+                      <td>{event.event_name}</td>
+                      <td>{event.event_category}</td>
+                      <td>{event.screen_name || "-"}</td>
+                      <td>{event.created_at ? new Date(event.created_at).toLocaleString() : "-"}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="empty-table-cell">
+                      No telemetry events found.
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -874,25 +997,29 @@ export default function App() {
             </div>
           </form>
           <div className="stack">
-            {data.staff.map((staffMember) => (
-              <article className="card" key={staffMember.id}>
-                <p>
-                  <strong>
-                    {staffMember.first_name} {staffMember.last_name}
-                  </strong>{" "}
-                  ({staffMember.staff_number})
-                </p>
-                <p>
-                  {staffMember.email} - {staffMember.role} -
-                  {staffMember.is_active ? " active" : " inactive"}
-                </p>
-                <div className="actions">
-                  <button type="button" onClick={() => handleToggleStaffActive(staffMember)}>
-                    Set {staffMember.is_active ? "Inactive" : "Active"}
-                  </button>
-                </div>
-              </article>
-            ))}
+            {data.staff.length ? (
+              data.staff.map((staffMember) => (
+                <article className="card" key={staffMember.id}>
+                  <p>
+                    <strong>
+                      {staffMember.first_name} {staffMember.last_name}
+                    </strong>{" "}
+                    ({staffMember.staff_number})
+                  </p>
+                  <p>
+                    {staffMember.email} - {staffMember.role} -
+                    {staffMember.is_active ? " active" : " inactive"}
+                  </p>
+                  <div className="actions">
+                    <button type="button" onClick={() => handleToggleStaffActive(staffMember)}>
+                      Set {staffMember.is_active ? "Inactive" : "Active"}
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="empty-state">No staff accounts to show.</p>
+            )}
           </div>
         </section>
       ) : null}
