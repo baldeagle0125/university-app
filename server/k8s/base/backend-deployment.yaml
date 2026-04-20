@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: backend
+    spec:
+      initContainers:
+        - name: migrate
+          image: university-app-backend:local
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: university-app-config
+          env:
+            - name: RUN_MIGRATIONS_ONLY
+              value: "true"
+            - name: POSTGRES_PASSWORD_FILE
+              value: /etc/university-app/secrets/db-password
+            - name: JWT_SECRET_FILE
+              value: /etc/university-app/secrets/jwt-secret-key
+            - name: QR_SECRET_FILE
+              value: /etc/university-app/secrets/qr-secret-key
+          volumeMounts:
+            - name: db-secrets
+              mountPath: /etc/university-app/secrets
+              readOnly: true
+      containers:
+        - name: backend
+          image: university-app-backend:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3333
+              name: http
+          envFrom:
+            - configMapRef:
+                name: university-app-config
+          env:
+            - name: RUN_MIGRATIONS_ON_STARTUP
+              value: "false"
+            - name: POSTGRES_PASSWORD_FILE
+              value: /etc/university-app/secrets/db-password
+            - name: JWT_SECRET_FILE
+              value: /etc/university-app/secrets/jwt-secret-key
+            - name: QR_SECRET_FILE
+              value: /etc/university-app/secrets/qr-secret-key
+          volumeMounts:
+            - name: db-secrets
+              mountPath: /etc/university-app/secrets
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: db-secrets
+          secret:
+            secretName: university-app-secrets
+            items:
+              - key: db-password
+                path: db-password
+              - key: jwt-secret-key
+                path: jwt-secret-key
+              - key: qr-secret-key
+                path: qr-secret-key
