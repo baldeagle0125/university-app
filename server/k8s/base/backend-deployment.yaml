@@ -12,26 +12,7 @@ spec:
       labels:
         app.kubernetes.io/name: backend
     spec:
-      initContainers:
-        - name: migrate
-          image: university-app-backend:local
-          imagePullPolicy: IfNotPresent
-          envFrom:
-            - configMapRef:
-                name: university-app-config
-          env:
-            - name: RUN_MIGRATIONS_ONLY
-              value: "true"
-            - name: POSTGRES_PASSWORD_FILE
-              value: /etc/university-app/secrets/db-password
-            - name: JWT_SECRET_FILE
-              value: /etc/university-app/secrets/jwt-secret-key
-            - name: QR_SECRET_FILE
-              value: /etc/university-app/secrets/qr-secret-key
-          volumeMounts:
-            - name: db-secrets
-              mountPath: /etc/university-app/secrets
-              readOnly: true
+      automountServiceAccountToken: false
       containers:
         - name: backend
           image: university-app-backend:local
@@ -42,18 +23,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: university-app-config
-          env:
-            - name: RUN_MIGRATIONS_ON_STARTUP
-              value: "false"
-            - name: POSTGRES_PASSWORD_FILE
-              value: /etc/university-app/secrets/db-password
-            - name: JWT_SECRET_FILE
-              value: /etc/university-app/secrets/jwt-secret-key
-            - name: QR_SECRET_FILE
-              value: /etc/university-app/secrets/qr-secret-key
           volumeMounts:
-            - name: db-secrets
-              mountPath: /etc/university-app/secrets
+            - name: app-secrets
+              mountPath: /run/secrets
               readOnly: true
           readinessProbe:
             httpGet:
@@ -79,7 +51,7 @@ spec:
               cpu: 500m
               memory: 512Mi
       volumes:
-        - name: db-secrets
+        - name: app-secrets
           secret:
             secretName: university-app-secrets
             items:
