@@ -666,6 +666,88 @@ h3 {
   line-height: 1.7;
 }
 
+.docs-intro {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+  max-width: 70ch;
+}
+
+.docs-grid {
+  margin-bottom: var(--space-3);
+}
+
+.doc-card {
+  display: grid;
+  gap: 0.8rem;
+  align-content: start;
+}
+
+.doc-card::before {
+  content: none;
+}
+
+.doc-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.doc-card .btn {
+  justify-self: start;
+}
+
+.docs-repo-card {
+  padding: 0;
+}
+
+.docs-repo-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  min-height: 96px;
+  padding: 1.1rem 1.25rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.docs-repo-icon {
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #0b6ad6, #2ac5f4);
+  box-shadow: 0 10px 20px rgba(11, 106, 214, 0.24);
+}
+
+.docs-repo-icon svg {
+  display: block;
+}
+
+.docs-repo-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.docs-repo-copy strong {
+  font-size: 1.05rem;
+  color: var(--primary-strong);
+}
+
+.docs-repo-copy span {
+  color: var(--muted);
+}
+
+.docs-repo-link:hover {
+  transform: translateY(-1px);
+}
+
+.docs-repo-card::before {
+  content: none;
+}
+
 @media (max-width: 760px) {
   .about-container {
     grid-template-columns: 1fr;
@@ -679,6 +761,21 @@ h3 {
 
   .about-name {
     font-size: 1.1rem;
+  }
+
+  .doc-card .btn {
+    width: min(320px, 100%);
+    text-align: center;
+  }
+
+  .docs-repo-link {
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .docs-repo-icon {
+    width: 2.6rem;
+    height: 2.6rem;
   }
 }
 
