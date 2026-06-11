@@ -2,6 +2,8 @@
 
 One-page project showcase website.
 
+Available at: https://showcase.setu.ie/C00290950/index.html
+
 ## Overview
 This is a static frontend page used to present the project.
 It does not call backend APIs and does not require a build step.
