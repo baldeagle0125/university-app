@@ -71,8 +71,6 @@ func (s *QRService) GenerateBarcodeToken(studentNumber string) (string, time.Tim
 
 	token := fmt.Sprintf("%s%s", payload, signature)
 
-	fmt.Printf("Generated barcode token: %s (length: %d)\n", token, len(token))
-
 	return token, expiresAt, nil
 }
 
@@ -97,7 +95,7 @@ func (s *QRService) GenerateBarcode(studentNumber string) ([]byte, time.Time, er
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	
+
 	return buf.Bytes(), expiresAt, nil
 }
 

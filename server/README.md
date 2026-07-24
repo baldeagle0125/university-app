@@ -21,9 +21,13 @@ From this directory:
 make up
 ```
 
+`make up` runs `make init` automatically. On the first run, this copies the tracked development templates in `backend/secrets/` to ignored local secret files used by Docker Compose. Change those placeholder values before using the stack outside local development.
+
 Useful targets:
 
 ```bash
+make init
+make check
 make build
 make up
 make up-detached
@@ -43,7 +47,8 @@ make seed-verify
 ## Service Notes
 
 - Backend source: `backend/`
-- Backend secrets: `backend/secrets/`
+- Backend local secrets: `backend/secrets/*.txt` (ignored)
+- Backend secret templates: `backend/secrets/*.txt.example` (tracked)
 - Backend static assets: `backend/static/`
 - Frontend source: `frontend/`
 

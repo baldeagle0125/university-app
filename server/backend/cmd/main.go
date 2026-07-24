@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"university-app/config"
 	"university-app/server"
 
@@ -9,8 +8,6 @@ import (
 )
 
 func main() {
-	fmt.Println("This is the University App server application.")
-
 	db := config.ConnectToDatabase()
 
 	config.RunMigrations(db)

@@ -3,7 +3,15 @@
 This folder contains supporting technical documentation for the University App project.
 
 ## Available Artifacts
-- `System Architecture Diagram.drawio`: source diagram for system architecture.
+
+- `Design Specification.docx`
+- `Final Report.docx`
+- `Functional Specification.docx`
+- `Research Document.docx`
+- `Ihor Melashchenko — Presentation Deck.pptx`
+- `Ihor Melashchenko — Presentation Deck (System Design).pptx`
+- `System Architecture Diagram.drawio`
+- `System Architecture Diagram (Figma).jpeg`
 
 ## Functional Specification
 - Scope and goals

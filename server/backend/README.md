@@ -110,7 +110,7 @@ Local source secret files:
 - `secrets/jwt_secret_key.txt`
 - `secrets/qr_secret_key.txt`
 
-Example templates are available under `./secrets/*.example`.
+These files are ignored by Git. From `server/`, run `make init` to create them from the tracked `./secrets/*.txt.example` templates, then replace the placeholder values before using the service outside local development.
 
 ## Database and Migrations
 Migrations run automatically on service startup (`config.RunMigrations`).
@@ -126,7 +126,7 @@ Important tables:
 Base path: `/api/v1`
 
 ### Health
-- `GET /health`
+- `GET /api/v1/health`
 
 ### Auth
 - `POST /login`

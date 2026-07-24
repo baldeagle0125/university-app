@@ -36,7 +36,11 @@ function extractStaffClaims(token) {
   try {
     const payload = token.split(".")[1];
     const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const decoded = atob(normalizedPayload);
+    const paddedPayload = normalizedPayload.padEnd(
+      Math.ceil(normalizedPayload.length / 4) * 4,
+      "=",
+    );
+    const decoded = atob(paddedPayload);
     const claims = JSON.parse(decoded);
 
     return {

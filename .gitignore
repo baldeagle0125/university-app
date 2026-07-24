@@ -1,8 +1,30 @@
+# macOS
 .DS_Store
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.swp
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Xcode user data and build output
+xcuserdata/
 *.xcuserstate
-server/frontend/node_modules/
-server/frontend/dist/
-server/frontend/.vite/
+DerivedData/
+
+# Go
+coverage.out
+
+# Node / Vite
+node_modules/
+dist/
+.vite/
+
+# Local development secrets (keep the templates tracked)
 server/backend/secrets/db_password.txt
 server/backend/secrets/jwt_secret_key.txt
 server/backend/secrets/qr_secret_key.txt

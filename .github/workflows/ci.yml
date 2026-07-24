@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    name: Server and showcase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: server/backend/go.mod
+          cache-dependency-path: server/backend/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/frontend/package-lock.json
+
+      - name: Validate Compose configuration
+        working-directory: server
+        run: make init && docker compose config --quiet
+
+      - name: Check Go formatting
+        working-directory: server/backend
+        run: test -z "$(gofmt -l .)"
+
+      - name: Test Go backend
+        working-directory: server/backend
+        run: go test ./...
+
+      - name: Vet Go backend
+        working-directory: server/backend
+        run: go vet ./...
+
+      - name: Install frontend dependencies
+        working-directory: server/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: server/frontend
+        run: npm run build
+
+      - name: Check showcase JavaScript
+        run: node --check showcase-web/script.js
+
+  ios:
+    name: iOS
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build iOS app
+        run: >
+          xcodebuild
+          -project clients/mobile/ios/UniversityApp/UniversityApp.xcodeproj
+          -scheme UniversityApp
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build

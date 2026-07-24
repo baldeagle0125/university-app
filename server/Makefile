@@ -1,10 +1,25 @@
+.PHONY: init check build up up-detached down down-volumes logs seed-reset seed-verify \
+	k8s-apply-local k8s-delete-local k8s-apply-prod k8s-delete-prod \
+	k8s-port-forward k8s-port-forward-stop
+
+init:
+	test -f backend/secrets/db_password.txt || cp backend/secrets/db_password.txt.example backend/secrets/db_password.txt
+	test -f backend/secrets/jwt_secret_key.txt || cp backend/secrets/jwt_secret_key.txt.example backend/secrets/jwt_secret_key.txt
+	test -f backend/secrets/qr_secret_key.txt || cp backend/secrets/qr_secret_key.txt.example backend/secrets/qr_secret_key.txt
+
+check: init
+	docker compose config --quiet
+	cd backend && test -z "$$(gofmt -l .)" && go test ./... && go vet ./...
+	cd frontend && npm ci && npm run build
+	node --check ../showcase-web/script.js
+
 build:
 	docker compose build
 
-up:
+up: init
 	docker compose up
 
-up-detached:
+up-detached: init
 	docker compose up -d
 
 down:
@@ -16,7 +31,7 @@ down-volumes:
 logs:
 	docker compose logs -f
 
-seed-reset:
+seed-reset: init
 	docker compose down -v
 	docker compose up -d --build
 
