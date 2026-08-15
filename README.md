@@ -6,7 +6,7 @@ A full-stack university student platform built as a final-year project at South 
 
 [View the project showcase](https://showcase.setu.ie/C00290950/index.html)
 
-> **Project status:** Complete and currently paused. The repository remains buildable and documented, but no active feature development is planned.
+> **Project status:** Complete.
 
 ## What It Includes
 
