@@ -127,3 +127,7 @@ These credentials are development-only and must not be used in a deployed enviro
 - [Kubernetes scaffold](server/k8s/README.md)
 - [Project documents](docs/README.md)
 - [Showcase website](showcase-web/README.md)
+
+## Author
+
+Created by [Ihor Melashchenko](https://ihormelashchenko.com).
